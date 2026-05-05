@@ -1,14 +1,14 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # 02 - Transformations Silver
-# MAGIC Nettoyage, correction d'encodage, enrichissement et classification
-# MAGIC des données de qualité de l'eau.
+# MAGIC Nettoyage, correction d'encodage, enrichissement, classification
+# MAGIC et jointure avec les prélèvements (dates, communes).
 
 # COMMAND ----------
 
 from pyspark.sql.functions import (
     col, trim, when, regexp_replace, regexp_extract,
-    current_timestamp, lit, lower, count, desc
+    current_timestamp, lit, lower, count, desc, to_date
 )
 from pyspark.sql.types import DoubleType, IntegerType
 
@@ -83,11 +83,11 @@ for colonne in ["libmajparametre", "libminparametre", "rqana"]:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 4. Enrichissement : catégories et conformité
+# MAGIC ## 4. Catégorisation des paramètres
 
 # COMMAND ----------
 
-# ---- Catégorisation des paramètres ----
+# Listes de codes par catégorie
 micro = ["CTF", "ECOLI", "ENTERO", "GT22_68", "GT36_44",
          "COLIF", "STPHY", "PSAR", "SPCLOS", "STRF", "BSIR",
          "GT22_72", "GT36_48", "LEGPN", "LEGSP"]
@@ -98,9 +98,8 @@ pesticides = [
     "MTC", "METOL", "MTCESA", "MTCOA", "METZCL",
     "LNCE", "LNDI", "CLRTOL", "ISOPR", "DIURO",
     "ALDRI", "DIELDR", "DDT", "HCH", "CLRDC", "HEP", "HEPET", "LNDN",
-    "GLPHOS", "AMPA",
-    "BFNX", "BOSCALI", "CNPA", "DMTE", "FLUMIOX", "METIL", "PPTP",
-    "PENOXU", "SULFRN", "MTMI", "FLONIC",
+    "GLPHOS", "AMPA", "BFNX", "BOSCALI", "CNPA", "DMTE", "FLUMIOX",
+    "METIL", "PPTP", "PENOXU", "SULFRN", "MTMI", "FLONIC",
     "CLMQT", "MEPIQT", "PROPZN", "ASULAME", "PESTOT"
 ]
 
@@ -124,6 +123,7 @@ metaux = ["PBT", "ALTMICR", "CUTMICR", "FET", "CRTOTR",
 
 chimie_minerale = ["SO4", "CL", "FLUOR", "SIO2", "DUR"]
 
+# Classification par code
 df = df.withColumn("categorie_parametre",
     when(col("cdparametresiseeaux").isin(micro), "Microbiologie")
     .when(col("cdparametresiseeaux").isin(pesticides), "Pesticides")
@@ -175,7 +175,7 @@ df = df.withColumn("categorie_parametre",
 
 # COMMAND ----------
 
-# ---- Type d'analyse et département ----
+# Type d'analyse et département
 df = df.withColumn("type_analyse",
     when(col("insituana") == "L", "Laboratoire")
     .when(col("insituana") == "T", "Terrain")
@@ -183,7 +183,7 @@ df = df.withColumn("type_analyse",
 )
 df = df.withColumn("code_departement", col("cddept"))
 
-# ---- Conformité ----
+# Conformité
 df = df.withColumn("limite_numerique",
     regexp_extract(col("limitequal"), "(\\d+[\\.,]?\\d*)", 1)
 ).withColumn("limite_numerique",
@@ -202,7 +202,7 @@ df = df.withColumn("est_conforme",
     .otherwise("Non évalué")
 )
 
-# ---- Niveau de danger ----
+# Niveau de danger
 sanitaire_critique = ["ECOLI", "ENTERO", "CTF", "COLIF", "STRF",
                       "BSIR", "SPCLOS", "PSAR", "LEGPN", "LEGSP"]
 sanitaire = ["NO3", "NO2", "NH4", "NO3_NO2",
@@ -236,19 +236,60 @@ df = df.withColumn("niveau_danger",
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 6. Sauvegarde de la table Silver
+# MAGIC ## 6. Enrichissement avec les prélèvements (dates, communes)
 
 # COMMAND ----------
 
-# Vérifications
+df_plv = spark.table("bronze_prelevements")
+
+# Dédupliquer : 1 ligne par referenceprel
+df_plv_dedup = df_plv.dropDuplicates(["referenceprel"])
+print(f"Prélèvements dédupliqués : {df_plv_dedup.count():,}")
+
+# Préparer les colonnes utiles
+df_plv_clean = df_plv_dedup.select(
+    col("referenceprel"),
+    to_date(col("dateprel"), "yyyy-MM-dd").alias("date_prelevement"),
+    trim(col("heureprel")).alias("heure_prelevement"),
+    trim(col("nomcommuneprinc")).alias("commune"),
+    trim(col("inseecommuneprinc")).alias("code_insee"),
+    trim(col("cdreseau")).alias("code_reseau"),
+    trim(col("conclusionprel")).alias("conclusion_prelevement"),
+    trim(col("plvconformitebacterio")).alias("conformite_bacterio"),
+    trim(col("plvconformitechimique")).alias("conformite_chimique")
+)
+
+# Nettoyer les "nan"
+for c in ["commune", "code_insee", "code_reseau", "heure_prelevement",
+          "conclusion_prelevement", "conformite_bacterio", "conformite_chimique"]:
+    df_plv_clean = df_plv_clean.withColumn(c,
+        when(col(c) == "nan", None).otherwise(col(c))
+    )
+
+# Jointure
+print("Jointure Silver + Prélèvements...")
+df = df.join(df_plv_clean, on="referenceprel", how="left")
+
+total = df.count()
+avec_date = df.filter(col("date_prelevement").isNotNull()).count()
+print(f"Total : {total:,}")
+print(f"Avec date : {avec_date:,} ({avec_date/total*100:.1f}%)")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 7. Vérification et sauvegarde
+
+# COMMAND ----------
+
 print("Distribution des catégories :")
 df.groupBy("categorie_parametre").count().orderBy(desc("count")).show()
 
-print("Distribution des niveaux de danger :")
-df.groupBy("niveau_danger").count().orderBy(desc("count")).show()
-
 print("Distribution de la conformité :")
 df.groupBy("est_conforme").count().orderBy(desc("count")).show()
+
+print("Plage de dates :")
+df.selectExpr("min(date_prelevement) as min", "max(date_prelevement) as max").show()
 
 # Sauvegarde
 df.write \
@@ -257,4 +298,4 @@ df.write \
     .option("overwriteSchema", "true") \
     .saveAsTable("silver_qualite_eau")
 
-print(f"Table silver_qualite_eau sauvegardée : {df.count():,} lignes, {len(df.columns)} colonnes")
+print(f"Silver sauvegardé : {df.count():,} lignes, {len(df.columns)} colonnes")
