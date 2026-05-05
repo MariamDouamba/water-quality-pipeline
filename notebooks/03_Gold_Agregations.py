@@ -1,13 +1,21 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # 03 - Agrégations Gold (Modèle en étoile)
-# MAGIC Création des tables de faits et dimensions pour l'analyse.
+# MAGIC Création des tables de faits et 6 dimensions pour l'analyse.
+# MAGIC
+# MAGIC Tables créées :
+# MAGIC - fact_analyses : table de faits (12.6M lignes)
+# MAGIC - dim_parametre : 1 386 paramètres
+# MAGIC - dim_departement : 101 départements avec noms et régions
+# MAGIC - dim_unite : 45 unités de mesure
+# MAGIC - dim_prelevement : 291K prélèvements avec dates et communes
+# MAGIC - dim_commune : 34K communes avec réseaux
 
 # COMMAND ----------
 
 from pyspark.sql.functions import (
     col, count, sum as spark_sum, avg, round as spark_round,
-    when, desc, asc, monotonically_increasing_id,
+    when, desc, monotonically_increasing_id,
     countDistinct, first, lit
 )
 from pyspark.sql import Row
@@ -50,14 +58,11 @@ dim_parametre = df_silver \
     )
 
 nb_params = dim_parametre.count()
-print(f"{nb_params} paramètres uniques")
-dim_parametre.groupBy("niveau_danger").count().orderBy(desc("count")).show()
+print(f"{nb_params} paramètres")
 dim_parametre.groupBy("categorie_parametre").count().orderBy(desc("count")).show()
 
-dim_parametre.write \
-    .format("delta").mode("overwrite") \
-    .option("overwriteSchema", "true") \
-    .saveAsTable("gold_dim_parametre")
+dim_parametre.write.format("delta").mode("overwrite") \
+    .option("overwriteSchema", "true").saveAsTable("gold_dim_parametre")
 print("gold_dim_parametre sauvegardée !")
 
 # COMMAND ----------
@@ -126,35 +131,24 @@ df_dept_ref = spark.createDataFrame(
     [Row(code_departement=d[0], nom_departement=d[1], region=d[2]) for d in dept_data]
 )
 
-dim_departement = df_silver \
-    .groupBy("code_departement") \
-    .agg(
-        count("*").alias("nb_analyses"),
-        countDistinct("referenceprel").alias("nb_prelevements"),
-        countDistinct("cdparametresiseeaux").alias("nb_parametres_analyses"),
-        spark_sum(when(col("est_conforme") == "Conforme", 1).otherwise(0)).alias("nb_conformes"),
-        spark_sum(when(col("est_conforme") == "Non conforme", 1).otherwise(0)).alias("nb_non_conformes")
-    ) \
-    .join(df_dept_ref, "code_departement", "left") \
-    .withColumn("population", lit(None).cast("integer")) \
-    .withColumn("taux_conformite",
-        spark_round(
-            col("nb_conformes") / (col("nb_conformes") + col("nb_non_conformes")) * 100, 2
-        )
-    ) \
-    .select(
-        "code_departement", "nom_departement", "region", "population",
-        "nb_analyses", "nb_prelevements", "nb_parametres_analyses",
-        "nb_conformes", "nb_non_conformes", "taux_conformite"
-    )
+dim_departement = df_silver.groupBy("code_departement").agg(
+    count("*").alias("nb_analyses"),
+    countDistinct("referenceprel").alias("nb_prelevements"),
+    countDistinct("commune").alias("nb_communes"),
+    spark_sum(when(col("est_conforme") == "Conforme", 1).otherwise(0)).alias("nb_conformes"),
+    spark_sum(when(col("est_conforme") == "Non conforme", 1).otherwise(0)).alias("nb_non_conformes")
+).join(df_dept_ref, "code_departement", "left") \
+.withColumn("taux_conformite",
+    spark_round(col("nb_conformes") / (col("nb_conformes") + col("nb_non_conformes")) * 100, 2)
+).select("code_departement", "nom_departement", "region",
+         "nb_analyses", "nb_prelevements", "nb_communes",
+         "nb_conformes", "nb_non_conformes", "taux_conformite")
 
 print(f"{dim_departement.count()} départements")
-dim_departement.orderBy("code_departement").show(10, truncate=False)
+dim_departement.orderBy("taux_conformite").show(5, truncate=False)
 
-dim_departement.write \
-    .format("delta").mode("overwrite") \
-    .option("overwriteSchema", "true") \
-    .saveAsTable("gold_dim_departement")
+dim_departement.write.format("delta").mode("overwrite") \
+    .option("overwriteSchema", "true").saveAsTable("gold_dim_departement")
 print("gold_dim_departement sauvegardée !")
 
 # COMMAND ----------
@@ -164,56 +158,81 @@ print("gold_dim_departement sauvegardée !")
 
 # COMMAND ----------
 
-dim_unite = df_silver \
-    .groupBy("cdunitereference") \
-    .agg(
-        first("cdunitereferencesiseeaux").alias("libelle_unite"),
-        count("*").alias("nb_utilisations")
-    )
+dim_unite = df_silver.groupBy("cdunitereference").agg(
+    first("cdunitereferencesiseeaux").alias("libelle_unite"),
+    count("*").alias("nb_utilisations")
+)
+print(f"{dim_unite.count()} unités")
 
-print(f"{dim_unite.count()} unités uniques")
-dim_unite.orderBy(desc("nb_utilisations")).show(10, truncate=False)
-
-dim_unite.write \
-    .format("delta").mode("overwrite") \
-    .option("overwriteSchema", "true") \
-    .saveAsTable("gold_dim_unite")
+dim_unite.write.format("delta").mode("overwrite") \
+    .option("overwriteSchema", "true").saveAsTable("gold_dim_unite")
 print("gold_dim_unite sauvegardée !")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 5. Dimension : dim_prelevement
+# MAGIC ## 5. Dimension : dim_prelevement (enrichie)
 
 # COMMAND ----------
 
-dim_prelevement = df_silver \
-    .groupBy("referenceprel") \
-    .agg(
-        first("code_departement").alias("departement_code"),
-        count("*").alias("nb_analyses"),
-        countDistinct("cdparametresiseeaux").alias("nb_params_testes"),
-        spark_sum(when(col("est_conforme") == "Conforme", 1).otherwise(0)).alias("nb_conformes"),
-        spark_sum(when(col("est_conforme") == "Non conforme", 1).otherwise(0)).alias("nb_non_conformes")
-    ) \
-    .withColumn("prelevement_conforme",
-        when(col("nb_non_conformes") == 0, "Conforme")
-        .otherwise("Non conforme")
-    )
+dim_prelevement = df_silver.groupBy("referenceprel").agg(
+    first("code_departement").alias("departement_code"),
+    first("date_prelevement").alias("date_prelevement"),
+    first("heure_prelevement").alias("heure_prelevement"),
+    first("commune").alias("commune"),
+    first("code_insee").alias("code_insee"),
+    first("code_reseau").alias("code_reseau"),
+    first("conclusion_prelevement").alias("conclusion_prelevement"),
+    first("conformite_bacterio").alias("conformite_bacterio"),
+    first("conformite_chimique").alias("conformite_chimique"),
+    count("*").alias("nb_analyses"),
+    countDistinct("cdparametresiseeaux").alias("nb_params_testes"),
+    spark_sum(when(col("est_conforme") == "Conforme", 1).otherwise(0)).alias("nb_conformes"),
+    spark_sum(when(col("est_conforme") == "Non conforme", 1).otherwise(0)).alias("nb_non_conformes")
+).withColumn("prelevement_conforme",
+    when(col("nb_non_conformes") == 0, "Conforme").otherwise("Non conforme")
+)
 
-print(f"{dim_prelevement.count():,} prélèvements uniques")
+nb_prel = dim_prelevement.count()
+print(f"{nb_prel:,} prélèvements")
+dim_prelevement.selectExpr("min(date_prelevement) as min", "max(date_prelevement) as max").show()
 dim_prelevement.groupBy("prelevement_conforme").count().orderBy(desc("count")).show()
 
-dim_prelevement.write \
-    .format("delta").mode("overwrite") \
-    .option("overwriteSchema", "true") \
-    .saveAsTable("gold_dim_prelevement")
+dim_prelevement.write.format("delta").mode("overwrite") \
+    .option("overwriteSchema", "true").saveAsTable("gold_dim_prelevement")
 print("gold_dim_prelevement sauvegardée !")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 6. Table de faits : fact_analyses
+# MAGIC ## 6. Dimension : dim_commune
+
+# COMMAND ----------
+
+df_com = spark.table("bronze_communes")
+
+dim_commune = df_com.select(
+    col("inseecommune").alias("code_insee"),
+    col("nomcommune").alias("nom_commune"),
+    col("cdreseau").alias("code_reseau"),
+    col("nomreseau").alias("nom_reseau")
+).dropDuplicates(["code_insee"]) \
+.withColumn("nom_commune",
+    when(col("nom_commune") == "nan", None).otherwise(col("nom_commune"))
+)
+
+nb_com = dim_commune.count()
+print(f"{nb_com:,} communes")
+dim_commune.show(5, truncate=False)
+
+dim_commune.write.format("delta").mode("overwrite") \
+    .option("overwriteSchema", "true").saveAsTable("gold_dim_commune")
+print("gold_dim_commune sauvegardée !")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 7. Table de faits : fact_analyses
 
 # COMMAND ----------
 
@@ -224,6 +243,8 @@ fact_analyses = df_silver.select(
     col("code_departement").alias("departement_code"),
     col("cdparametresiseeaux").alias("parametre_code"),
     col("cdunitereference").alias("unite_code"),
+    col("date_prelevement"),
+    col("commune"),
     col("type_analyse"),
     col("rqana").alias("resultat_brut"),
     col("valtraduite").alias("valeur_numerique"),
@@ -236,21 +257,19 @@ nb_faits = fact_analyses.count()
 print(f"{nb_faits:,} lignes")
 fact_analyses.show(5, truncate=25)
 
-fact_analyses.write \
-    .format("delta").mode("overwrite") \
-    .option("overwriteSchema", "true") \
-    .saveAsTable("gold_fact_analyses")
+fact_analyses.write.format("delta").mode("overwrite") \
+    .option("overwriteSchema", "true").saveAsTable("gold_fact_analyses")
 print("gold_fact_analyses sauvegardée !")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Résumé
+# MAGIC ## 8. Résumé
 
 # COMMAND ----------
 
 print("=" * 60)
-print("MODÈLE EN ÉTOILE CRÉÉ !")
+print("MODÈLE EN ÉTOILE COMPLET !")
 print("=" * 60)
 print(f"""
 Tables créées :
@@ -258,5 +277,6 @@ Tables créées :
    - gold_dim_parametre     : {nb_params} paramètres
    - gold_dim_departement   : {dim_departement.count()} départements
    - gold_dim_unite         : {dim_unite.count()} unités
-   - gold_dim_prelevement   : {dim_prelevement.count():,} prélèvements
+   - gold_dim_prelevement   : {nb_prel:,} prélèvements
+   - gold_dim_commune       : {nb_com:,} communes
 """)
