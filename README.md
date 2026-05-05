@@ -115,18 +115,21 @@ flowchart TD
 
 ## Structure du projet
 
-water-quality-pipelines/
-├── .github/workflows/
-│   └── ci.yml                          # Pipeline CI/CD (3 jobs)
-├── notebooks/
-│   ├── 01_DLT_Ingestion_Qualite_Eau.py # Bronze : ingestion API
-│   ├── 02_Silver_Transformation.py     # Silver : nettoyage
-│   └── 03_Gold_Agregations.py          # Gold : modèle en étoile
-├── config/
-│   └── pipeline_config.py              # Configuration centralisée
-├── tests/
-│   └── test_pipeline.py                # Tests unitaires
-└── README.md
+    water-quality-pipelines/
+    ├── .github/
+    │   └── workflows/
+    │       └── ci.yml                             # Pipeline CI/CD (3jobs)
+    ├── notebooks/
+    │   ├── 01_DLT_Ingestion_Qualite_Eau.py        # Bronze : ingestion API
+    │   ├── 02_Silver_Transformation.py            # Silver : nettoyage
+    │   └── 03_Gold_Agregations.py                 # Gold : modèle en étoile
+    ├── config/
+    │   └── pipeline_config.py                     # Configuration centralisée  
+    ├── tests/
+    │   └── test_pipeline.py                       # Tests unitaires 
+    ├── .gitignore
+    ├── LICENSE
+    └── README.md
 
 ## Catégories de paramètres
 
