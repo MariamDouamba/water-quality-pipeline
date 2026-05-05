@@ -1,8 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # 01 - Ingestion des données de qualité de l'eau (Bronze)
-# MAGIC Ce notebook télécharge les données depuis l'API data.gouv.fr
+# MAGIC Ce notebook télécharge les 3 fichiers depuis l'API data.gouv.fr
 # MAGIC et les stocke dans la couche Bronze en format Delta.
+# MAGIC
+# MAGIC Fichiers ingérés :
+# MAGIC - DIS_RESULT_2024.txt : résultats d'analyses (12.6M lignes)
+# MAGIC - DIS_PLV_2024.txt : prélèvements avec dates et communes (408K lignes)
+# MAGIC - DIS_COM_UDI_2024.txt : correspondances communes/réseaux (49K lignes)
 
 # COMMAND ----------
 
@@ -11,6 +16,9 @@ import zipfile
 import io
 import os
 import pandas as pd
+from pyspark.sql.functions import current_timestamp, lit
+from functools import reduce
+from pyspark.sql import DataFrame
 
 # Configuration
 DATASET_ID = "resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-commune"
@@ -46,7 +54,7 @@ print(f"URL : {resource['url']}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 2. Téléchargement et extraction
+# MAGIC ## 2. Téléchargement et extraction du ZIP
 
 # COMMAND ----------
 
@@ -56,52 +64,36 @@ zip_file = zipfile.ZipFile(io.BytesIO(response.content))
 file_list = zip_file.namelist()
 print(f"Fichiers dans le ZIP : {file_list}")
 
-# Identifier le fichier de résultats
-result_file = [f for f in file_list if "RESULT" in f.upper()][0]
-print(f"Fichier de résultats : {result_file}")
-
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 3. Chargement et sauvegarde en Bronze (Delta)
+# MAGIC ## 3. Ingestion DIS_RESULT (résultats d'analyses) → Bronze
 
 # COMMAND ----------
 
-# Lire le CSV par chunks et sauvegarder en CSV propre dans le Workspace
+result_file = [f for f in file_list if "RESULT" in f.upper()][0]
+print(f"Lecture de {result_file}...")
 csv_data = zip_file.read(result_file)
 
+# Écrire en CSV par chunks dans le Workspace
 workspace_dir = f"/Workspace/Users/{spark.conf.get('spark.databricks.workspaceUrl', 'user')}/bronze_csv"
 os.makedirs(workspace_dir, exist_ok=True)
 
 chunk_size = 500_000
 reader = pd.read_csv(
-    io.BytesIO(csv_data),
-    sep=',',
-    encoding='latin-1',
-    low_memory=False,
-    on_bad_lines='skip',
-    chunksize=chunk_size,
-    dtype=str
+    io.BytesIO(csv_data), sep=',', encoding='latin-1',
+    low_memory=False, on_bad_lines='skip', chunksize=chunk_size, dtype=str
 )
 
 for i, chunk in enumerate(reader):
     csv_path = f"{workspace_dir}/part_{i:03d}.csv"
     chunk.to_csv(csv_path, index=False, header=(i == 0))
-    print(f"Chunk {i} : {len(chunk):,} lignes")
+    print(f"   Chunk {i} : {len(chunk):,} lignes")
 
-# COMMAND ----------
-
-# Lire avec Spark et sauvegarder en Delta
-from pyspark.sql.functions import current_timestamp, lit
-
-df_bronze = spark.read \
-    .option("header", "true") \
-    .option("inferSchema", "false") \
+# Lire avec Spark
+df_first = spark.read.option("header", "true").option("inferSchema", "false") \
     .csv(f"{workspace_dir}/part_000.csv")
-
-colonnes = df_bronze.columns
-from functools import reduce
-from pyspark.sql import DataFrame
+colonnes = df_first.columns
 
 all_files = sorted([f for f in os.listdir(workspace_dir) if f.endswith('.csv')])
 dfs = []
@@ -114,19 +106,85 @@ for f in all_files:
         df = df.toDF(*colonnes)
     dfs.append(df)
 
-df_bronze_all = reduce(DataFrame.unionAll, dfs)
+df_result = reduce(DataFrame.unionAll, dfs)
 
-# Ajouter métadonnées
-df_bronze_final = df_bronze_all \
+df_result \
     .withColumn("_source_file", lit(result_file)) \
     .withColumn("_ingestion_timestamp", current_timestamp()) \
-    .withColumn("_year", lit(ANNEE))
-
-# Sauvegarder en Delta
-df_bronze_final.write \
-    .format("delta") \
-    .mode("overwrite") \
+    .withColumn("_year", lit(ANNEE)) \
+    .write.format("delta").mode("overwrite") \
     .option("overwriteSchema", "true") \
     .saveAsTable("bronze_qualite_eau")
 
-print(f"Table bronze_qualite_eau créée : {df_bronze_final.count():,} lignes")
+print(f"bronze_qualite_eau : {spark.table('bronze_qualite_eau').count():,} lignes")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 4. Ingestion DIS_PLV (prélèvements) → Bronze
+
+# COMMAND ----------
+
+plv_file = [f for f in file_list if "PLV" in f.upper()][0]
+print(f"Lecture de {plv_file}...")
+plv_data = zip_file.read(plv_file)
+
+df_plv_pd = pd.read_csv(
+    io.BytesIO(plv_data), sep=',', encoding='latin-1',
+    low_memory=False, on_bad_lines='skip', dtype=str
+)
+print(f"   {len(df_plv_pd):,} lignes, {len(df_plv_pd.columns)} colonnes")
+
+df_plv_spark = spark.createDataFrame(df_plv_pd.astype(str))
+df_plv_spark \
+    .withColumn("_source_file", lit(plv_file)) \
+    .withColumn("_ingestion_timestamp", current_timestamp()) \
+    .write.format("delta").mode("overwrite") \
+    .option("overwriteSchema", "true") \
+    .saveAsTable("bronze_prelevements")
+
+print(f"bronze_prelevements : {spark.table('bronze_prelevements').count():,} lignes")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 5. Ingestion DIS_COM_UDI (communes) → Bronze
+
+# COMMAND ----------
+
+com_file = [f for f in file_list if "COM" in f.upper()][0]
+print(f"Lecture de {com_file}...")
+com_data = zip_file.read(com_file)
+
+df_com_pd = pd.read_csv(
+    io.BytesIO(com_data), sep=',', encoding='latin-1',
+    low_memory=False, on_bad_lines='skip', dtype=str
+)
+print(f"   {len(df_com_pd):,} lignes, {len(df_com_pd.columns)} colonnes")
+
+df_com_spark = spark.createDataFrame(df_com_pd.astype(str))
+df_com_spark \
+    .withColumn("_source_file", lit(com_file)) \
+    .withColumn("_ingestion_timestamp", current_timestamp()) \
+    .write.format("delta").mode("overwrite") \
+    .option("overwriteSchema", "true") \
+    .saveAsTable("bronze_communes")
+
+print(f"bronze_communes : {spark.table('bronze_communes').count():,} lignes")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 6. Résumé de l'ingestion
+
+# COMMAND ----------
+
+print("=" * 60)
+print("INGESTION BRONZE TERMINÉE")
+print("=" * 60)
+print(f"""
+Tables créées :
+   - bronze_qualite_eau   : {spark.table('bronze_qualite_eau').count():,} lignes (résultats)
+   - bronze_prelevements  : {spark.table('bronze_prelevements').count():,} lignes (prélèvements)
+   - bronze_communes      : {spark.table('bronze_communes').count():,} lignes (communes)
+""")
