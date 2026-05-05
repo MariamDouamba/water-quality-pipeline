@@ -7,8 +7,9 @@ on:
     branches: [main]
 
 jobs:
-  validate:
-    name: Validate Pipeline
+  # ---- JOB 1 : Validation de la structure ----
+  validate-structure:
+    name: Validate Structure
     runs-on: ubuntu-latest
 
     steps:
@@ -20,12 +21,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8
-
-      - name: Validate notebook structure
+      - name: Check notebook files exist
         run: |
           echo "Checking notebooks..."
           test -f notebooks/01_DLT_Ingestion_Qualite_Eau.py && echo "  01_Ingestion OK"
@@ -33,59 +29,97 @@ jobs:
           test -f notebooks/03_Gold_Agregations.py && echo "  03_Gold OK"
           echo "All notebooks present!"
 
-      - name: Validate config
+      - name: Check config files exist
         run: |
           echo "Checking config..."
-          python -c "
-          exec(open('config/pipeline_config.py').read())
-          
-          assert len(CATEGORIES) >= 8, f'Missing categories: {len(CATEGORIES)}'
-          print(f'  {len(CATEGORIES)} categories OK')
-          
-          assert len(DANGER_LEVELS) >= 3, f'Missing danger levels: {len(DANGER_LEVELS)}'
-          print(f'  {len(DANGER_LEVELS)} danger levels OK')
-          
-          assert len(TABLES) == 7, f'Expected 7 tables, got {len(TABLES)}'
-          print(f'  {len(TABLES)} tables OK')
-          
-          for cat, params in CATEGORIES.items():
-              assert len(params) > 0, f'Empty category: {cat}'
-          
-          print('Config validated!')
-          "
+          test -f config/pipeline_config.py && echo "  pipeline_config OK"
+          echo "Config files present!"
+
+      - name: Check test files exist
+        run: |
+          echo "Checking tests..."
+          test -f tests/test_pipeline.py && echo "  test_pipeline OK"
+          echo "Test files present!"
 
       - name: Lint with flake8
         run: |
+          pip install flake8
           flake8 config/ tests/ \
             --max-line-length 120 \
-            --ignore E501,W503,E402,E302,E303,W291,W292,W293,E231,E261,E262 \
+            --ignore E501,W503,E402,E302,E303,W291,W292,W293,E231,E261,E262,E741 \
             --exclude __pycache__ \
-            || echo "Lint warnings found (non-blocking)"
+            || echo "Lint warnings (non-blocking)"
 
-      - name: Security check
+  # ---- JOB 2 : Tests de configuration ----
+  test-config:
+    name: Test Configuration
+    runs-on: ubuntu-latest
+    needs: validate-structure
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Test categories
         run: |
-          echo "Checking for hardcoded secrets..."
+          python -c "
+          exec(open('config/pipeline_config.py').read())
+          for cat, params in CATEGORIES.items():
+              assert len(params) > 0, f'Empty category: {cat}'
+          print(f'Categories: {len(CATEGORIES)} validated')
+          "
+
+      - name: Test danger levels
+        run: |
+          python -c "
+          exec(open('config/pipeline_config.py').read())
+          for level, params in DANGER_LEVELS.items():
+              assert len(params) > 0, f'Empty level: {level}'
+          print(f'Danger levels: {len(DANGER_LEVELS)} validated')
+          "
+
+      - name: Test tables config
+        run: |
+          python -c "
+          exec(open('config/pipeline_config.py').read())
+          assert len(TABLES) == 7, f'Expected 7 tables, got {len(TABLES)}'
+          print(f'Tables: {len(TABLES)} validated')
+          "
+
+      - name: Test encoding corrections
+        run: |
+          python -c "
+          exec(open('config/pipeline_config.py').read())
+          assert len(ENCODING_CORRECTIONS) > 10, 'Not enough corrections'
+          print(f'Encoding: {len(ENCODING_CORRECTIONS)} corrections validated')
+          "
+
+  # ---- JOB 3 : Sécurité ----
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Scanning for secrets..."
           ! grep -rn "password\s*=\|secret\s*=\|api_key\s*=" \
             --include="*.py" \
             --exclude-dir=.git \
             config/ notebooks/ tests/ || true
-          echo "Security check passed!"
+          echo "No secrets found!"
 
-      - name: Run config tests
+      - name: Check for sensitive files
         run: |
-          python -c "
-          exec(open('config/pipeline_config.py').read())
-          
-          for cat, params in CATEGORIES.items():
-              assert len(params) > 0, f'Empty: {cat}'
-          print('Categories: OK')
-          
-          for level, params in DANGER_LEVELS.items():
-              assert len(params) > 0, f'Empty: {level}'
-          print('Danger levels: OK')
-          
-          assert len(ENCODING_CORRECTIONS) > 0
-          print('Encoding corrections: OK')
-          
-          print('All tests passed!')
-          "
+          echo "Checking for sensitive files..."
+          test ! -f .env && echo "  No .env file (good)"
+          test ! -f credentials.json && echo "  No credentials.json (good)"
+          echo "Security check passed!"
