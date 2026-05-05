@@ -8,15 +8,25 @@ DATASET_ID = "resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-com
 API_BASE_URL = "https://www.data.gouv.fr/api/1/datasets"
 ANNEE = "2024"
 
+# ---- Fichiers source ----
+SOURCE_FILES = {
+    "resultats": "DIS_RESULT_2024.txt",
+    "prelevements": "DIS_PLV_2024.txt",
+    "communes": "DIS_COM_UDI_2024.txt",
+}
+
 # ---- Tables Delta ----
 TABLES = {
-    "bronze": "bronze_qualite_eau",
+    "bronze_resultats": "bronze_qualite_eau",
+    "bronze_prelevements": "bronze_prelevements",
+    "bronze_communes": "bronze_communes",
     "silver": "silver_qualite_eau",
     "gold_fact": "gold_fact_analyses",
     "gold_dim_parametre": "gold_dim_parametre",
     "gold_dim_departement": "gold_dim_departement",
     "gold_dim_unite": "gold_dim_unite",
     "gold_dim_prelevement": "gold_dim_prelevement",
+    "gold_dim_commune": "gold_dim_commune",
 }
 
 # ---- Catégories de paramètres ----
@@ -86,3 +96,16 @@ ENCODING_CORRECTIONS = {
     "Ã»": "û", "Ã§": "ç", "Ã‰": "É", "Ã€": "À",
     "Ã": "À", "Âµ": "µ", "Â°": "°", "Â²": "²",
 }
+
+# ---- Colonnes PLV à garder ----
+PLV_COLUMNS_KEEP = [
+    "referenceprel", "dateprel", "heureprel",
+    "nomcommuneprinc", "inseecommuneprinc", "cdreseau",
+    "conclusionprel", "plvconformitebacterio", "plvconformitechimique"
+]
+
+# ---- Colonnes PLV à écarter ----
+PLV_COLUMNS_DROP = [
+    "cdreseauamont", "nomreseauamont", "pourcentdebit",
+    "plvconformitereferencebact", "plvconformitereferencechim"
+]
