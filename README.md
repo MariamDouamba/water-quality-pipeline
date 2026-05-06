@@ -6,10 +6,10 @@ Pipeline de données pour l'analyse de la qualité de l'eau distribuée en Franc
 
 ```mermaid
 flowchart LR
-    A[data.gouv.fr\nAPI + ZIP] -->|Ingestion| B[Bronze\nDonnées brutes]
-    B -->|Nettoyage\nEnrichissement| C[Silver\nDonnées nettoyées]
-    C -->|Agrégation\nModélisation| D[Gold\nModèle en étoile]
-    
+    A[data.gouv.fr\nAPI + ZIP] -->|3 fichiers| B[Bronze\n3 tables brutes]
+    B -->|Nettoyage\nEnrichissement\nJointure| C[Silver\n1 table enrichie]
+    C -->|Agrégation\nModélisation| D[Gold\nModèle en étoile\n6 dimensions]
+
     style A fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
     style B fill:#faece7,stroke:#993c1d,color:#4a1b0c
     style C fill:#e1f5ee,stroke:#0f6e56,color:#04342c
@@ -24,6 +24,7 @@ erDiagram
     FACT_ANALYSES ||--o{ DIM_DEPARTEMENT : "departement_code"
     FACT_ANALYSES ||--o{ DIM_UNITE : "unite_code"
     FACT_ANALYSES ||--o{ DIM_PRELEVEMENT : "reference_prel"
+    DIM_PRELEVEMENT ||--o{ DIM_COMMUNE : "code_insee"
 
     FACT_ANALYSES {
         long analyse_id PK
@@ -31,12 +32,13 @@ erDiagram
         string departement_code FK
         string parametre_code FK
         string unite_code FK
+        date date_prelevement
+        string commune
         string resultat_brut
         double valeur_numerique
         double limite_numerique
         string est_conforme
         string type_analyse
-        string annee
     }
 
     DIM_PARAMETRE {
@@ -53,9 +55,7 @@ erDiagram
         string code_departement PK
         string nom_departement
         string region
-        int population
         long nb_analyses
-        long nb_conformes
         double taux_conformite
     }
 
@@ -67,10 +67,18 @@ erDiagram
 
     DIM_PRELEVEMENT {
         string referenceprel PK
-        string departement_code
-        int nb_analyses
-        int nb_params_testes
-        string prelevement_conforme
+        date date_prelevement
+        string heure_prelevement
+        string commune
+        string code_insee
+        string conformite_bacterio
+        string conformite_chimique
+    }
+
+    DIM_COMMUNE {
+        string code_insee PK
+        string nom_commune
+        string nom_reseau
     }
 ```
 
@@ -84,13 +92,10 @@ flowchart TD
     C -->|OK| D[Test Configuration]
 
     C -->|Vérifie| C1[Notebooks existent]
-    C -->|Vérifie| C2[Config existe]
-    C -->|Lint| C3[flake8]
-    D -->|Teste| D1[Catégories]
-    D -->|Teste| D2[Niveaux de danger]
-    D -->|Teste| D3[Tables config]
+    C -->|Lint| C2[flake8]
+    D -->|Teste| D1[Catégories et danger]
+    D -->|Teste| D2[Tables et encodage]
     E -->|Scanne| E1[Pas de secrets]
-    E -->|Scanne| E2[Pas de credentials]
 
     style A fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
     style B fill:#eeedfe,stroke:#534ab7,color:#26215c
@@ -99,11 +104,15 @@ flowchart TD
     style E fill:#e6f1fb,stroke:#185fa5,color:#042c53
 ```
 
-## Source de données
+## Sources de données
 
-- **Dataset** : [Résultats du contrôle sanitaire de l'eau](https://www.data.gouv.fr/fr/datasets/resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-commune/)
-- **Volume** : 12.6 millions d'analyses (2024)
-- **Couverture** : 101 départements français
+| Fichier | Description | Volume |
+|---------|-------------|--------|
+| DIS_RESULT_2024.txt | Résultats d'analyses | 12.6M lignes |
+| DIS_PLV_2024.txt | Prélèvements (dates, communes) | 408K lignes |
+| DIS_COM_UDI_2024.txt | Communes et réseaux | 49K lignes |
+
+Source : [data.gouv.fr](https://www.data.gouv.fr/fr/datasets/resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-commune/)
 
 ## Stack technique
 
@@ -118,15 +127,16 @@ flowchart TD
     water-quality-pipelines/
     ├── .github/
     │   └── workflows/
-    │       └── ci.yml                             # Pipeline CI/CD (3jobs)
+    │       └── ci.yml
     ├── notebooks/
-    │   ├── 01_DLT_Ingestion_Qualite_Eau.py        # Bronze : ingestion API
-    │   ├── 02_Silver_Transformation.py            # Silver : nettoyage
-    │   └── 03_Gold_Agregations.py                 # Gold : modèle en étoile
+    │   ├── 01_DLT_Ingestion_Qualite_Eau.py
+    │   ├── 02_Silver_Transformation.py
+    │   ├── 03_Gold_Agregations.py
+    │   └── 04_Quality_Checks.py
     ├── config/
-    │   └── pipeline_config.py                     # Configuration centralisée  
+    │   └── pipeline_config.py
     ├── tests/
-    │   └── test_pipeline.py                       # Tests unitaires 
+    │   └── test_pipeline.py
     ├── .gitignore
     ├── LICENSE
     └── README.md
@@ -148,11 +158,12 @@ flowchart TD
 ## Résultats clés
 
 - 28 140 non-conformités détectées sur 12.6M analyses
-- 17 543 prélèvements avec au moins une non-conformité (sur 291 604)
-- Taux de conformité moyen : environ 99%
+- 17 543 prélèvements avec au moins une non-conformité
+- Données couvrant toute l'année 2024 (2 jan - 31 déc)
+- 34 811 communes et 101 départements analysés
 - 4 niveaux de danger : Sanitaire critique, Sanitaire, Organoleptique, Surveillance
 
-## Conventions de commits (Semantic Release)
+## Conventions de commits
 
 - `feat:` nouvelle fonctionnalité
 - `fix:` correction de bug
