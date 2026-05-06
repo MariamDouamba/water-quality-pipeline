@@ -87,7 +87,7 @@ jobs:
         run: |
           python -c "
           exec(open('config/pipeline_config.py').read())
-          assert len(TABLES) == 7, f'Expected 7 tables, got {len(TABLES)}'
+          assert len(TABLES) == 10, f'Expected 10 tables, got {len(TABLES)}'
           print(f'Tables: {len(TABLES)} validated')
           "
 
