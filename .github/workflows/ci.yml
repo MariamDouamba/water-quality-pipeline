@@ -123,3 +123,34 @@ jobs:
           test ! -f .env && echo "  No .env file (good)"
           test ! -f credentials.json && echo "  No credentials.json (good)"
           echo "Security check passed!"
+
+# ---- JOB 4 : Semantic Release ----
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    needs: [validate-structure, test-config]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install -g semantic-release @semantic-release/changelog @semantic-release/git conventional-changelog-conventionalcommits
+
+      - name: Run Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
