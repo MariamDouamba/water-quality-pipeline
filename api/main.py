@@ -205,6 +205,58 @@ def analyses_non_conformes(
     return execute_query(query)
 
 
+from fastapi.responses import StreamingResponse
+import io
+import csv
+
+
+@app.get("/export/departements", tags=["Export"])
+def export_departements_csv():
+    """Exporte les départements en CSV."""
+    data = execute_query("""
+        SELECT code_departement, nom_departement, region,
+               nb_analyses, nb_conformes, nb_non_conformes, taux_conformite
+        FROM gold_dim_departement
+        ORDER BY taux_conformite ASC
+    """)
+
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=data[0].keys())
+    writer.writeheader()
+    writer.writerows(data)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=departements.csv"}
+    )
+
+
+@app.get("/export/non-conformites", tags=["Export"])
+def export_non_conformites_csv():
+    """Exporte les non-conformités en CSV."""
+    data = execute_query("""
+        SELECT f.date_prelevement, f.commune, f.departement_code,
+               f.parametre_code, f.resultat_brut, f.valeur_numerique,
+               f.limite_numerique
+        FROM gold_fact_analyses f
+        WHERE f.est_conforme = 'Non conforme'
+        ORDER BY f.date_prelevement DESC
+        LIMIT 1000
+    """)
+
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=data[0].keys())
+    writer.writeheader()
+    writer.writerows(data)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=non_conformites.csv"}
+    )
+
+
 # ---- LANCEMENT ----
 if __name__ == "__main__":
     import uvicorn
