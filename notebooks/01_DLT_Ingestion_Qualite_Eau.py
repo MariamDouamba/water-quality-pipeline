@@ -76,7 +76,7 @@ print(f"Lecture de {result_file}...")
 csv_data = zip_file.read(result_file)
 
 # Écrire en CSV par chunks dans le Workspace
-workspace_dir = f"/Workspace/Users/{spark.conf.get('spark.databricks.workspaceUrl', 'user')}/bronze_csv"
+workspace_dir = "/Workspace/Users/myriam.douamba@gmail.com/bronze_csv"
 os.makedirs(workspace_dir, exist_ok=True)
 
 chunk_size = 500_000
