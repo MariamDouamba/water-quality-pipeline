@@ -75,36 +75,19 @@ result_file = [f for f in file_list if "RESULT" in f.upper()][0]
 print(f"Lecture de {result_file}...")
 csv_data = zip_file.read(result_file)
 
-# Écrire en CSV par chunks dans le Workspace
-workspace_dir = "/Workspace/Users/myriam.douamba@gmail.com/bronze_csv"
-os.makedirs(workspace_dir, exist_ok=True)
-
+# Charger par chunks avec Pandas puis convertir en Spark
+print("Chargement par chunks...")
 chunk_size = 500_000
 reader = pd.read_csv(
     io.BytesIO(csv_data), sep=',', encoding='latin-1',
     low_memory=False, on_bad_lines='skip', chunksize=chunk_size, dtype=str
 )
 
-for i, chunk in enumerate(reader):
-    csv_path = f"{workspace_dir}/part_{i:03d}.csv"
-    chunk.to_csv(csv_path, index=False, header=(i == 0))
-    print(f"   Chunk {i} : {len(chunk):,} lignes")
-
-# Lire avec Spark
-df_first = spark.read.option("header", "true").option("inferSchema", "false") \
-    .csv(f"{workspace_dir}/part_000.csv")
-colonnes = df_first.columns
-
-all_files = sorted([f for f in os.listdir(workspace_dir) if f.endswith('.csv')])
 dfs = []
-for f in all_files:
-    path = f"{workspace_dir}/{f}"
-    if f == "part_000.csv":
-        df = spark.read.option("header", "true").option("inferSchema", "false").csv(path)
-    else:
-        df = spark.read.option("header", "false").option("inferSchema", "false").csv(path)
-        df = df.toDF(*colonnes)
-    dfs.append(df)
+for i, chunk in enumerate(reader):
+    df_chunk = spark.createDataFrame(chunk.astype(str))
+    dfs.append(df_chunk)
+    print(f"   Chunk {i} : {len(chunk):,} lignes")
 
 df_result = reduce(DataFrame.unionAll, dfs)
 
