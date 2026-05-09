@@ -154,3 +154,39 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
+
+# ---- JOB 5 : Deploy to Databricks ----
+  deploy:
+    name: Deploy to Databricks
+    runs-on: ubuntu-latest
+    needs: [validate-structure, test-config]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Sync Databricks Repos
+        env:
+          DATABRICKS_HOST: https://dbc-8dca470e-413b.cloud.databricks.com
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          echo "Fetching Databricks Repos..."
+          REPO_ID=$(curl -s -X GET \
+            "${DATABRICKS_HOST}/api/2.0/repos" \
+            -H "Authorization: Bearer ${DATABRICKS_TOKEN}" | \
+            python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          repos = data.get('repos', [])
+          for r in repos:
+              if 'water-quality' in r.get('path', ''):
+                  print(r['id'])
+                  break
+          ")
+
+          echo "Syncing repo ID: ${REPO_ID}..."
+          curl -s -X PATCH \
+            "${DATABRICKS_HOST}/api/2.0/repos/${REPO_ID}" \
+            -H "Authorization: Bearer ${DATABRICKS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"branch": "main"}'
+
+          echo "Databricks Repos synchronized!"
