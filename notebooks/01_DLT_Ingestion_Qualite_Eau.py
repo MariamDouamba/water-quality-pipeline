@@ -75,38 +75,17 @@ result_file = [f for f in file_list if "RESULT" in f.upper()][0]
 print(f"Lecture de {result_file}...")
 csv_data = zip_file.read(result_file)
 
-# Écrire les CSV dans le Workspace utilisateur
-workspace_dir = "/Workspace/Users/myriam.douamba@gmail.com/bronze_csv"
-os.makedirs(workspace_dir, exist_ok=True)
-
-chunk_size = 500_000
-reader = pd.read_csv(
+# Charger tout en Pandas (dtype=str pour éviter les conflits de types)
+print("Chargement avec Pandas...")
+df_pd = pd.read_csv(
     io.BytesIO(csv_data), sep=',', encoding='latin-1',
-    low_memory=False, on_bad_lines='skip', chunksize=chunk_size, dtype=str
+    low_memory=False, on_bad_lines='skip', dtype=str
 )
+print(f"Pandas : {len(df_pd):,} lignes, {len(df_pd.columns)} colonnes")
 
-for i, chunk in enumerate(reader):
-    csv_path = f"{workspace_dir}/part_{i:03d}.csv"
-    chunk.to_csv(csv_path, index=False, header=(i == 0))
-    print(f"   Chunk {i} : {len(chunk):,} lignes")
-
-# Lire avec Spark depuis le Workspace
-df_first = spark.read.option("header", "true").option("inferSchema", "false") \
-    .csv(f"{workspace_dir}/part_000.csv")
-colonnes = df_first.columns
-
-all_files = sorted([f for f in os.listdir(workspace_dir) if f.endswith('.csv')])
-dfs = []
-for f in all_files:
-    path = f"{workspace_dir}/{f}"
-    if f == "part_000.csv":
-        df = spark.read.option("header", "true").option("inferSchema", "false").csv(path)
-    else:
-        df = spark.read.option("header", "false").option("inferSchema", "false").csv(path)
-        df = df.toDF(*colonnes)
-    dfs.append(df)
-
-df_result = reduce(DataFrame.unionAll, dfs)
+# Convertir en Spark (une seule conversion)
+print("Conversion en Spark DataFrame...")
+df_result = spark.createDataFrame(df_pd.astype(str).fillna(""))
 
 df_result \
     .withColumn("_source_file", lit(result_file)) \
@@ -117,11 +96,6 @@ df_result \
     .saveAsTable("bronze_qualite_eau")
 
 print(f"bronze_qualite_eau : {spark.table('bronze_qualite_eau').count():,} lignes")
-
-# Nettoyer les fichiers temporaires
-import shutil
-shutil.rmtree(workspace_dir, ignore_errors=True)
-print("Fichiers temporaires nettoyés")
 
 # COMMAND ----------
 
