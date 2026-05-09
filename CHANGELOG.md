@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.1.1...v1.2.0) (2026-05-09)
+
+### Features
+
+* add deployment job to sync Databricks repositories ([790554a](https://github.com/MariamDouamba/water-quality-pipeline/commit/790554ad4db7bf90c134506c40f0b776d8e091de))
+
 ## [1.1.1](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.1.0...v1.1.1) (2026-05-09)
 
 ### Bug Fixes
