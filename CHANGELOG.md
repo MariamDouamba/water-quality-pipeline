@@ -1,3 +1,9 @@
+## [1.2.3](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.2...v1.2.3) (2026-05-10)
+
+### Bug Fixes
+
+* implement chunked CSV reading and writing for improved data ingestion ([b01c5af](https://github.com/MariamDouamba/water-quality-pipeline/commit/b01c5af4d504d4164a68a381f4590e2f3f6e082f))
+
 ## [1.2.2](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.1...v1.2.2) (2026-05-09)
 
 ## [1.2.1](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.0...v1.2.1) (2026-05-09)
