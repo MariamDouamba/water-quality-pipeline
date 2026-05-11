@@ -466,4 +466,4 @@ st.markdown("""
     &nbsp;—&nbsp; Water Quality Pipeline · Mariam Douamba · Simplon.co · 2026
     <br>Source : data.gouv.fr — Contrôle sanitaire de l'eau 2024
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True)# refreshed Tue May 12 01:18:15 CEST 2026
