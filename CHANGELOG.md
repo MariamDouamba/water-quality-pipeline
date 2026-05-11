@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.9...v1.3.0) (2026-05-11)
+
+### Features
+
+* add Flask backend for AquaStat dashboard with API integration ([bce99fb](https://github.com/MariamDouamba/water-quality-pipeline/commit/bce99fb330e8fbc3b6cf48eb6221b572b49cead2))
+
 ## [1.2.9](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.8...v1.2.9) (2026-05-11)
 
 ### Bug Fixes
