@@ -32,7 +32,8 @@ ANNEE = "2024"
 # COMMAND ----------
 
 url = f"https://www.data.gouv.fr/api/1/datasets/{DATASET_ID}/"
-response = requests.get(url)
+response = requests.get(url, timeout=30)
+response.raise_for_status()
 dataset = response.json()
 
 # Trouver le fichier de l'année souhaitée
@@ -48,6 +49,14 @@ if resource is None:
             resource = r
             break
 
+if resource is None:
+    titres_disponibles = [r['title'] for r in dataset['resources']]
+    raise ValueError(
+        f"Aucun fichier trouvé pour l'année {ANNEE}.\n"
+        f"Fichiers disponibles dans le dataset : {titres_disponibles}\n"
+        f"Vérifiez la valeur de ANNEE ou le nom du dataset."
+    )
+
 print(f"Fichier trouvé : {resource['title']}")
 print(f"URL : {resource['url']}")
 
@@ -59,8 +68,13 @@ print(f"URL : {resource['url']}")
 # COMMAND ----------
 
 print(f"Téléchargement de {resource['title']}...")
-response = requests.get(resource['url'], stream=True)
-zip_file = zipfile.ZipFile(io.BytesIO(response.content))
+zip_buffer = io.BytesIO()
+with requests.get(resource['url'], stream=True, timeout=300) as r:
+    r.raise_for_status()
+    for bloc in r.iter_content(chunk_size=8 * 1024 * 1024):
+        zip_buffer.write(bloc)
+zip_buffer.seek(0)
+zip_file = zipfile.ZipFile(zip_buffer)
 file_list = zip_file.namelist()
 print(f"Fichiers dans le ZIP : {file_list}")
 
@@ -77,7 +91,11 @@ csv_data = zip_file.read(result_file)
 
 # Écrire en CSV par chunks dans le Workspace
 workspace_dir = "/Workspace/Users/myriam.douamba@gmail.com/bronze_csv"
-os.makedirs(workspace_dir, exist_ok=True)
+# Nettoyer le répertoire avant chaque run pour éviter les fichiers résiduels
+import shutil
+if os.path.exists(workspace_dir):
+    shutil.rmtree(workspace_dir)
+os.makedirs(workspace_dir)
 
 chunk_size = 500_000
 reader = pd.read_csv(
