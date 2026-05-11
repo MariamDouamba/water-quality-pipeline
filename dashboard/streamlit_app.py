@@ -355,15 +355,11 @@ with col_p:
         x=df_p['nb_nc'], y=df_p['nom_parametre'],
         orientation='h',
         marker=dict(
-            color=df_p['nb_nc'],
-            colorscale=[[0,'rgba(0,180,255,0.4)'],[0.5,'rgba(255,193,7,0.7)'],[1,'rgba(255,82,82,0.9)']],
+            color=df_p['nb_nc'].tolist(),
+            colorscale=[[0,'#00b4ff'],[0.5,'#ffc107'],[1,'#ff5252']],
             showscale=False,
-            line=dict(color='transparent'),
         ),
         hovertemplate='<b>%{y}</b><br>%{x:,.0f} NC<extra></extra>',
-        text=df_p['nb_nc'].apply(lambda v: f"{v:,.0f}"),
-        textposition='outside',
-        textfont=dict(color='#7fa8c9', size=9),
     ))
     st.plotly_chart(styled_chart(fig_p, 400), use_container_width=True)
 
@@ -377,10 +373,9 @@ with col_c:
         x=df_c['nb_nc'], y=df_c['label'],
         orientation='h',
         marker=dict(
-            color=df_c['nb_nc'],
-            colorscale=[[0,'rgba(0,180,255,0.3)'],[1,'rgba(0,229,255,0.8)']],
+            color=df_c['nb_nc'].tolist(),
+            colorscale=[[0,'#00b4ff'],[1,'#00e5ff']],
             showscale=False,
-            line=dict(color='transparent'),
         ),
         hovertemplate='<b>%{y}</b><br>%{x:,.0f} NC<extra></extra>',
     ))
