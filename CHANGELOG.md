@@ -1,3 +1,9 @@
+## [1.2.9](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.8...v1.2.9) (2026-05-11)
+
+### Bug Fixes
+
+* add numpy dependency to requirements ([c0d9d48](https://github.com/MariamDouamba/water-quality-pipeline/commit/c0d9d48a7692bf6e4c416be21e602be5e2a1a2bf))
+
 ## [1.2.8](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.7...v1.2.8) (2026-05-11)
 
 ### Bug Fixes
