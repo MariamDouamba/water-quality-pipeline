@@ -1,3 +1,9 @@
+## [1.3.7](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.6...v1.3.7) (2026-05-11)
+
+### Bug Fixes
+
+* force redeploy Streamlit Cloud ([20c3095](https://github.com/MariamDouamba/water-quality-pipeline/commit/20c309554a1414528ba5fa6977267b1fa119567c))
+
 ## [1.3.6](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.5...v1.3.6) (2026-05-11)
 
 ### Bug Fixes
