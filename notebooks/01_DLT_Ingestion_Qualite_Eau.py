@@ -16,8 +16,6 @@ import zipfile
 import io
 import pandas as pd
 from pyspark.sql.functions import current_timestamp, lit
-from functools import reduce
-from pyspark.sql import DataFrame
 
 # Configuration
 DATASET_ID = "resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-commune"
@@ -87,28 +85,30 @@ print(f"Fichiers dans le ZIP : {file_list}")
 result_file = [f for f in file_list if "RESULT" in f.upper()][0]
 print(f"Lecture de {result_file}...")
 
-# Lire en streaming depuis le ZIP et convertir directement en Spark
-# sans passer par des fichiers intermédiaires (incompatibles avec Serverless)
-chunk_size = 500_000
+# Écriture chunk par chunk directement dans Delta
+# pour éviter le plan d'exécution trop profond (DEADLINE_EXCEEDED sur Serverless)
+chunk_size = 1_000_000
 reader = pd.read_csv(
     zip_file.open(result_file), sep=',', encoding='latin-1',
     low_memory=False, on_bad_lines='skip', chunksize=chunk_size, dtype=str
 )
 
-dfs = []
 for i, chunk in enumerate(reader):
-    dfs.append(spark.createDataFrame(chunk.astype(str)))
-    print(f"   Chunk {i} : {len(chunk):,} lignes")
+    df_chunk = spark.createDataFrame(chunk.astype(str)) \
+        .withColumn("_source_file", lit(result_file)) \
+        .withColumn("_ingestion_timestamp", current_timestamp()) \
+        .withColumn("_year", lit(ANNEE))
 
-df_result = reduce(DataFrame.unionAll, dfs)
+    if i == 0:
+        df_chunk.write.format("delta").mode("overwrite") \
+            .option("overwriteSchema", "true") \
+            .partitionBy("cddept") \
+            .saveAsTable("bronze_qualite_eau")
+    else:
+        df_chunk.write.format("delta").mode("append") \
+            .saveAsTable("bronze_qualite_eau")
 
-df_result \
-    .withColumn("_source_file", lit(result_file)) \
-    .withColumn("_ingestion_timestamp", current_timestamp()) \
-    .withColumn("_year", lit(ANNEE)) \
-    .write.format("delta").mode("overwrite") \
-    .option("overwriteSchema", "true") \
-    .saveAsTable("bronze_qualite_eau")
+    print(f"   Chunk {i} : {len(chunk):,} lignes écrites")
 
 print(f"bronze_qualite_eau : {spark.table('bronze_qualite_eau').count():,} lignes")
 

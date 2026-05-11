@@ -16,7 +16,7 @@
 from pyspark.sql.functions import (
     col, count, sum as spark_sum, avg, round as spark_round,
     when, desc, monotonically_increasing_id,
-    countDistinct, first, lit
+    countDistinct, first, lit, broadcast
 )
 from pyspark.sql import Row
 
@@ -27,7 +27,7 @@ from pyspark.sql import Row
 
 # COMMAND ----------
 
-df_silver = spark.table("silver_qualite_eau")
+df_silver = spark.table("silver_qualite_eau").cache()
 print(f"Silver chargé : {df_silver.count():,} lignes")
 
 # COMMAND ----------
@@ -137,7 +137,7 @@ dim_departement = df_silver.groupBy("code_departement").agg(
     countDistinct("commune").alias("nb_communes"),
     spark_sum(when(col("est_conforme") == "Conforme", 1).otherwise(0)).alias("nb_conformes"),
     spark_sum(when(col("est_conforme") == "Non conforme", 1).otherwise(0)).alias("nb_non_conformes")
-).join(df_dept_ref, "code_departement", "left") \
+).join(broadcast(df_dept_ref), "code_departement", "left") \
 .withColumn("taux_conformite",
     spark_round(col("nb_conformes") / (col("nb_conformes") + col("nb_non_conformes")) * 100, 2)
 ).select("code_departement", "nom_departement", "region",

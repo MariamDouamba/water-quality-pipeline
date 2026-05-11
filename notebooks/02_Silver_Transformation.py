@@ -19,7 +19,7 @@ from pyspark.sql.types import DoubleType, IntegerType
 
 # COMMAND ----------
 
-df = spark.table("bronze_qualite_eau")
+df = spark.table("bronze_qualite_eau").cache()
 print(f"Bronze chargé : {df.count():,} lignes, {len(df.columns)} colonnes")
 
 # COMMAND ----------
@@ -47,10 +47,8 @@ df = df.withColumn("valtraduite", col("valtraduite").cast(DoubleType()))
 df = df.withColumn("cdparametre", col("cdparametre").cast(IntegerType()))
 
 # Supprimer les doublons
-nb_avant = df.count()
 df = df.dropDuplicates()
-nb_apres = df.count()
-print(f"Doublons supprimés : {nb_avant - nb_apres:,}")
+print("Doublons supprimés")
 
 # COMMAND ----------
 
