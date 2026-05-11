@@ -132,13 +132,16 @@ def load_databricks(query):
         return None, "no_credentials"
     try:
         from databricks import sql
-        conn = sql.connect(
+        with sql.connect(
             server_hostname=host,
             http_path=http_path,
             access_token=token,
-        )
-        df = pd.read_sql(query, conn)
-        conn.close()
+        ) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(query)
+                cols = [d[0] for d in cursor.description]
+                rows = cursor.fetchall()
+                df = pd.DataFrame(rows, columns=cols)
         return df, "databricks"
     except Exception as e:
         return None, str(e)
