@@ -1,3 +1,9 @@
+## [1.2.4](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.3...v1.2.4) (2026-05-11)
+
+### Bug Fixes
+
+* enhance error handling and improve CSV download process ([6df6b3b](https://github.com/MariamDouamba/water-quality-pipeline/commit/6df6b3b849f8baa58f7e2ee247fd292ac9941307))
+
 ## [1.2.3](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.2...v1.2.3) (2026-05-10)
 
 ### Bug Fixes
