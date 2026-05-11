@@ -27,7 +27,7 @@ from pyspark.sql import Row
 
 # COMMAND ----------
 
-df_silver = spark.table("silver_qualite_eau").cache()
+df_silver = spark.table("silver_qualite_eau")
 print(f"Silver chargé : {df_silver.count():,} lignes")
 
 # COMMAND ----------

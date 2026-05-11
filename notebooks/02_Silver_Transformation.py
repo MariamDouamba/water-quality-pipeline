@@ -19,7 +19,7 @@ from pyspark.sql.types import DoubleType, IntegerType
 
 # COMMAND ----------
 
-df = spark.table("bronze_qualite_eau").cache()
+df = spark.table("bronze_qualite_eau")
 print(f"Bronze chargé : {df.count():,} lignes, {len(df.columns)} colonnes")
 
 # COMMAND ----------
