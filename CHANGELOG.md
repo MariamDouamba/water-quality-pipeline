@@ -1,3 +1,9 @@
+## [1.3.6](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.5...v1.3.6) (2026-05-11)
+
+### Bug Fixes
+
+* refactor Databricks connection to use context manager for better resource handling ([ac517d9](https://github.com/MariamDouamba/water-quality-pipeline/commit/ac517d98df278e9cd37de5e4af094c40c8a839d5))
+
 ## [1.3.5](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.4...v1.3.5) (2026-05-11)
 
 ### Bug Fixes
