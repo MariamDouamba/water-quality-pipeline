@@ -108,13 +108,17 @@ def styled_chart(fig, height=350):
 # ── Data connection ────────────────────────────────────────────────────────────
 def _get_databricks_creds():
     """Récupère les credentials depuis st.secrets ou variables d'env"""
+    # 1. Streamlit Cloud secrets (priorité absolue)
     try:
-        host      = st.secrets["databricks"]["host"]
-        http_path = st.secrets["databricks"]["http_path"]
-        token     = st.secrets["databricks"]["token"]
-        return host, http_path, token
+        if "databricks" in st.secrets:
+            host      = st.secrets["databricks"]["host"]
+            http_path = st.secrets["databricks"]["http_path"]
+            token     = st.secrets["databricks"]["token"]
+            if token:
+                return host, http_path, token
     except Exception:
         pass
+    # 2. Variables d'environnement
     host      = os.getenv("DATABRICKS_HOST", "")
     http_path = os.getenv("DATABRICKS_HTTP_PATH", "")
     token     = os.getenv("DATABRICKS_TOKEN", "")
@@ -393,12 +397,11 @@ with tab1:
     fig_d = px.bar(
         df_d, x='nom_departement', y='nb_analyses',
         color='nb_analyses',
-        color_continuous_scale=[[0,'#0a1628'],[0.5,'#1565C0'],[1,'#00b4ff']],
+        color_continuous_scale=[[0,'#1565C0'],[1,'#00b4ff']],
         labels={'nb_analyses': 'Analyses', 'nom_departement': ''},
         hover_data=['code_dept'],
     )
     fig_d.update_traces(
-        marker_line_color='transparent',
         hovertemplate='<b>%{x}</b><br>%{y:,.0f} analyses<extra></extra>',
     )
     fig_d.update_coloraxes(showscale=False)
@@ -411,7 +414,7 @@ with tab2:
         fig_nc = px.bar(
             df_nc, x='nom_departement', y='nb_nc',
             color='nb_nc',
-            color_continuous_scale=[[0,'rgba(255,193,7,0.2)'],[1,'rgba(255,82,82,0.9)']],
+            color_continuous_scale=[[0,'#ffc107'],[1,'#ff5252']],
             labels={'nb_nc': 'Non-conformités', 'nom_departement': ''},
         )
         fig_nc.update_traces(
