@@ -1,3 +1,9 @@
+## [1.3.2](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.1...v1.3.2) (2026-05-11)
+
+### Bug Fixes
+
+* update gauge display and layout in Streamlit dashboard ([fc8235b](https://github.com/MariamDouamba/water-quality-pipeline/commit/fc8235bf42f769d6bea776b0843380b61fcd6202))
+
 ## [1.3.1](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.0...v1.3.1) (2026-05-11)
 
 ### Bug Fixes
