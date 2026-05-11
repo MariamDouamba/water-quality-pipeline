@@ -1,3 +1,9 @@
+## [1.3.1](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.0...v1.3.1) (2026-05-11)
+
+### Bug Fixes
+
+* fallback données démo sans token ([4966eb4](https://github.com/MariamDouamba/water-quality-pipeline/commit/4966eb436043dc8d8d3574a7b39e9d457add7530))
+
 ## [1.3.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.9...v1.3.0) (2026-05-11)
 
 ### Features
