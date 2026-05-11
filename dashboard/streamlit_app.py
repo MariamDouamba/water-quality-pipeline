@@ -106,15 +106,32 @@ def styled_chart(fig, height=350):
     return fig
 
 # ── Data connection ────────────────────────────────────────────────────────────
+def _get_databricks_creds():
+    """Récupère les credentials depuis st.secrets ou variables d'env"""
+    try:
+        host      = st.secrets["databricks"]["host"]
+        http_path = st.secrets["databricks"]["http_path"]
+        token     = st.secrets["databricks"]["token"]
+        return host, http_path, token
+    except Exception:
+        pass
+    host      = os.getenv("DATABRICKS_HOST", "")
+    http_path = os.getenv("DATABRICKS_HTTP_PATH", "")
+    token     = os.getenv("DATABRICKS_TOKEN", "")
+    return host, http_path, token
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_databricks(query):
-    """Charge depuis Databricks SQL Warehouse"""
+    """Charge depuis Databricks SQL Warehouse — fallback immédiat si pas de creds"""
+    host, http_path, token = _get_databricks_creds()
+    if not token:
+        return None, "no_credentials"
     try:
         from databricks import sql
         conn = sql.connect(
-            server_hostname=os.getenv("DATABRICKS_HOST", "dbc-8dca470e-413b.cloud.databricks.com"),
-            http_path=os.getenv("DATABRICKS_HTTP_PATH", "/sql/1.0/warehouses/dbdc064f89e97c74"),
-            access_token=os.getenv("DATABRICKS_TOKEN", ""),
+            server_hostname=host,
+            http_path=http_path,
+            access_token=token,
         )
         df = pd.read_sql(query, conn)
         conn.close()
