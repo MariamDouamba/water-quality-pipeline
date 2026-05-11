@@ -1,3 +1,9 @@
+## [1.2.6](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.5...v1.2.6) (2026-05-11)
+
+### Bug Fixes
+
+* optimize data ingestion by writing chunks directly to Delta and improve caching in Silver transformations ([96994d3](https://github.com/MariamDouamba/water-quality-pipeline/commit/96994d3e915f2034374dc65122949100e2ec3b86))
+
 ## [1.2.5](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.4...v1.2.5) (2026-05-11)
 
 ### Bug Fixes
