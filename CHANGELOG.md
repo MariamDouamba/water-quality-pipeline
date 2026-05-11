@@ -1,3 +1,9 @@
+## [1.3.3](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.2...v1.3.3) (2026-05-11)
+
+### Bug Fixes
+
+* update color scales and text formatting in horizontal bar charts ([8b6f1ef](https://github.com/MariamDouamba/water-quality-pipeline/commit/8b6f1ef1979d7e62fb497d9781060a8d51431a0e))
+
 ## [1.3.2](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.1...v1.3.2) (2026-05-11)
 
 ### Bug Fixes
