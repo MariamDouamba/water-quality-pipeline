@@ -1,3 +1,9 @@
+## [1.3.5](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.4...v1.3.5) (2026-05-11)
+
+### Bug Fixes
+
+* suppression marker_line_color + use_container_width deprecated ([7433b51](https://github.com/MariamDouamba/water-quality-pipeline/commit/7433b513286e4ec45338baad2516b8d4c7192591))
+
 ## [1.3.4](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.3...v1.3.4) (2026-05-11)
 
 ### Bug Fixes
