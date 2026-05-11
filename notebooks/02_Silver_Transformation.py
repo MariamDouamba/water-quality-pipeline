@@ -32,10 +32,10 @@ print(f"Bronze chargé : {df.count():,} lignes, {len(df.columns)} colonnes")
 # Supprimer la colonne inutile (100% null)
 df = df.drop("libwebparametre")
 
-# Remplacer les "NULL" texte par de vrais null
+# Remplacer les "NULL" et "nan" (produits par pandas .astype(str)) par de vrais null
 for c in df.columns:
     if not c.startswith("_"):
-        df = df.withColumn(c, when(col(c) == "NULL", None).otherwise(col(c)))
+        df = df.withColumn(c, when(col(c).isin("NULL", "nan", ""), None).otherwise(col(c)))
 
 # Nettoyer les espaces
 for c in df.columns:
