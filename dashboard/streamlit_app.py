@@ -317,7 +317,7 @@ with col_temp:
         name='Prélèvements',
         hovertemplate='<b>%{x}</b><br>%{y:,.0f} prélèvements<extra></extra>',
     ))
-    st.plotly_chart(styled_chart(fig, 300), use_container_width=True)
+    st.plotly_chart(styled_chart(fig, 300), width='stretch')
 
 with col_gauge:
     fig_gauge = go.Figure(go.Indicator(
@@ -343,7 +343,7 @@ with col_gauge:
         height=300,
         margin=dict(t=40, b=20, l=30, r=30)
     )
-    st.plotly_chart(fig_gauge, use_container_width=True)
+    st.plotly_chart(fig_gauge, width='stretch')
 
 st.divider()
 
@@ -365,7 +365,7 @@ with col_p:
         ),
         hovertemplate='<b>%{y}</b><br>%{x:,.0f} NC<extra></extra>',
     ))
-    st.plotly_chart(styled_chart(fig_p, 400), use_container_width=True)
+    st.plotly_chart(styled_chart(fig_p, 400), width='stretch')
 
 with col_c:
     st.caption("Top communes non conformes")
@@ -383,7 +383,7 @@ with col_c:
         ),
         hovertemplate='<b>%{y}</b><br>%{x:,.0f} NC<extra></extra>',
     ))
-    st.plotly_chart(styled_chart(fig_c, 400), use_container_width=True)
+    st.plotly_chart(styled_chart(fig_c, 400), width='stretch')
 
 st.divider()
 
@@ -406,7 +406,7 @@ with tab1:
     )
     fig_d.update_coloraxes(showscale=False)
     fig_d.update_xaxes(tickangle=-35, tickfont=dict(size=9))
-    st.plotly_chart(styled_chart(fig_d, 350), use_container_width=True)
+    st.plotly_chart(styled_chart(fig_d, 350), width='stretch')
 
 with tab2:
     if 'nb_nc' in df_depts.columns:
@@ -418,12 +418,11 @@ with tab2:
             labels={'nb_nc': 'Non-conformités', 'nom_departement': ''},
         )
         fig_nc.update_traces(
-            marker_line_color='transparent',
             hovertemplate='<b>%{x}</b><br>%{y:,.0f} NC<extra></extra>',
         )
         fig_nc.update_coloraxes(showscale=False)
         fig_nc.update_xaxes(tickangle=-35, tickfont=dict(size=9))
-        st.plotly_chart(styled_chart(fig_nc, 350), use_container_width=True)
+        st.plotly_chart(styled_chart(fig_nc, 350), width='stretch')
     else:
         st.info("Données de non-conformités par département disponibles avec connexion Databricks.")
 
@@ -452,7 +451,7 @@ if selected_params:
             line=dict(color=colors[i % len(colors)], width=1.5),
             fillcolor=f'rgba({int(colors[i%len(colors)][1:3],16)},{int(colors[i%len(colors)][3:5],16)},{int(colors[i%len(colors)][5:],16)},0.15)',
         ))
-    st.plotly_chart(styled_chart(fig_box, 380), use_container_width=True)
+    st.plotly_chart(styled_chart(fig_box, 380), width='stretch')
     st.caption("Distribution simulée — données réelles disponibles avec connexion Databricks")
 
 st.divider()
