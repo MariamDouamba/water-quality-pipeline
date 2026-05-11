@@ -1,3 +1,9 @@
+## [1.3.4](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.3...v1.3.4) (2026-05-11)
+
+### Bug Fixes
+
+* charts Plotly + connexion Databricks via st.secrets ([a4f90da](https://github.com/MariamDouamba/water-quality-pipeline/commit/a4f90da9391a9687d5a2c7236d8ad03423d5da2d))
+
 ## [1.3.3](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.2...v1.3.3) (2026-05-11)
 
 ### Bug Fixes
