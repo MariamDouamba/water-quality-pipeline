@@ -1,3 +1,9 @@
+## [1.2.8](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.7...v1.2.8) (2026-05-11)
+
+### Bug Fixes
+
+* improve null value handling by replacing "NULL", "nan", and empty strings with true nulls ([ec1fcb3](https://github.com/MariamDouamba/water-quality-pipeline/commit/ec1fcb371c887a4b62e805f03e357336e224d186))
+
 ## [1.2.7](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.6...v1.2.7) (2026-05-11)
 
 ### Bug Fixes
