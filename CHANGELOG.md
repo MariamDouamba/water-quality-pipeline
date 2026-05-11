@@ -1,3 +1,9 @@
+## [1.2.7](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.6...v1.2.7) (2026-05-11)
+
+### Bug Fixes
+
+* remove unnecessary caching for data loading in Silver transformations ([d749684](https://github.com/MariamDouamba/water-quality-pipeline/commit/d7496848c2738ea0f96e35de1afe7a8013a1274f))
+
 ## [1.2.6](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.2.5...v1.2.6) (2026-05-11)
 
 ### Bug Fixes
