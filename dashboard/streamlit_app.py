@@ -317,16 +317,13 @@ with col_temp:
 
 with col_gauge:
     fig_gauge = go.Figure(go.Indicator(
-        mode="gauge+number+delta",
+        mode="gauge+number",
         value=94.2,
-        delta={'reference': 95, 'valueformat': '.1f', 'suffix': '%'},
-        number={'suffix': '%', 'font': {'size': 40, 'color': '#00e676', 'family': 'Syne'}},
+        number={'suffix': '%', 'font': {'size': 40, 'color': '#00e676'}},
         title={'text': "Taux de conformité national", 'font': {'color': '#7fa8c9', 'size': 12}},
         gauge={
-            'axis': {'range': [0, 100], 'tickcolor': '#3d6080'},
+            'axis': {'range': [0, 100]},
             'bar': {'color': '#00e676', 'thickness': 0.25},
-            'bgcolor': 'transparent',
-            'borderwidth': 0,
             'steps': [
                 {'range': [0, 70],  'color': 'rgba(255,82,82,0.15)'},
                 {'range': [70, 90], 'color': 'rgba(255,193,7,0.1)'},
@@ -335,7 +332,13 @@ with col_gauge:
             'threshold': {'line': {'color': '#00b4ff', 'width': 2}, 'thickness': 0.8, 'value': 95},
         }
     ))
-    fig_gauge.update_layout(**THEME, height=300, margin=dict(t=40, b=20, l=30, r=30))
+    fig_gauge.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#7fa8c9'),
+        height=300,
+        margin=dict(t=40, b=20, l=30, r=30)
+    )
     st.plotly_chart(fig_gauge, use_container_width=True)
 
 st.divider()
