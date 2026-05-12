@@ -1,3 +1,9 @@
+## [1.3.10](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.9...v1.3.10) (2026-05-12)
+
+### Bug Fixes
+
+* add error logging for Databricks connection failures ([e40fdc5](https://github.com/MariamDouamba/water-quality-pipeline/commit/e40fdc5345522b375f0dc45f4cafa16ecd9b3c3e))
+
 ## [1.3.9](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.8...v1.3.9) (2026-05-12)
 
 ### Bug Fixes
