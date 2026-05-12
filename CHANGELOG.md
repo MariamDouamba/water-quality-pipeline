@@ -1,3 +1,9 @@
+## [1.3.11](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.10...v1.3.11) (2026-05-12)
+
+### Bug Fixes
+
+* enhance error logging for Databricks credentials retrieval ([a711d05](https://github.com/MariamDouamba/water-quality-pipeline/commit/a711d05d4d0af6d628460b1fa0c7f049351e1315))
+
 ## [1.3.10](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.9...v1.3.10) (2026-05-12)
 
 ### Bug Fixes
