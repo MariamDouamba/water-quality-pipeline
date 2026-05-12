@@ -1,3 +1,9 @@
+## [1.3.8](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.7...v1.3.8) (2026-05-12)
+
+### Bug Fixes
+
+* update SQL queries for data retrieval and improve filtering conditions ([918bbeb](https://github.com/MariamDouamba/water-quality-pipeline/commit/918bbeb3d732faf866d54ebb34a27a278ac458ac))
+
 ## [1.3.7](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.6...v1.3.7) (2026-05-11)
 
 ### Bug Fixes
