@@ -196,7 +196,8 @@ def get_all_data():
         SELECT DATE_FORMAT(date_prelevement, 'MMM') AS mois,
                MONTH(date_prelevement) AS mois_num,
                COUNT(*) AS nb_prelevements
-        FROM water_quality.gold.gold_dim_prelevement
+        FROM gold_dim_prelevement
+        WHERE date_prelevement IS NOT NULL
         GROUP BY 1, 2 ORDER BY 2
     """)
     if df_temp is None:
@@ -206,39 +207,32 @@ def get_all_data():
 
     # Params NC
     df_params, _ = load_databricks("""
-        SELECT p.nom_parametre, COUNT(*) AS nb_nc
-        FROM water_quality.gold.gold_fact_analyses f
-        JOIN water_quality.gold.gold_dim_parametre p ON f.id_parametre = p.id_parametre
-        WHERE f.resultat_numerique > p.valeur_limite_superieure
-           OR f.resultat_numerique < p.valeur_limite_inferieure
-        GROUP BY p.nom_parametre ORDER BY nb_nc DESC LIMIT 20
+        SELECT p.libelle_parametre AS nom_parametre, COUNT(*) AS nb_nc
+        FROM gold_fact_analyses f
+        JOIN gold_dim_parametre p ON f.parametre_code = p.cdparametresiseeaux
+        WHERE f.est_conforme = 'Non conforme'
+        GROUP BY p.libelle_parametre ORDER BY nb_nc DESC LIMIT 20
     """)
     if df_params is None:
         df_params = gen_params_nc()
 
     # Communes NC
     df_communes, _ = load_databricks("""
-        SELECT c.nom_commune, c.code_dept, COUNT(*) AS nb_nc
-        FROM water_quality.gold.gold_fact_analyses f
-        JOIN water_quality.gold.gold_dim_prelevement pr ON f.id_prelevement = pr.id_prelevement
-        JOIN water_quality.gold.gold_dim_commune c ON pr.code_commune = c.code_commune
-        WHERE f.est_conforme = FALSE
-        GROUP BY c.nom_commune, c.code_dept ORDER BY nb_nc DESC LIMIT 30
+        SELECT commune AS nom_commune, departement_code AS code_dept,
+               COUNT(*) AS nb_nc
+        FROM gold_fact_analyses
+        WHERE est_conforme = 'Non conforme' AND commune IS NOT NULL
+        GROUP BY commune, departement_code ORDER BY nb_nc DESC LIMIT 30
     """)
     if df_communes is None:
         df_communes = gen_communes_nc()
 
     # Depts
     df_depts, _ = load_databricks("""
-        SELECT d.nom_departement, d.code_dept,
-               COUNT(*) AS nb_analyses,
-               SUM(CASE WHEN f.est_conforme = FALSE THEN 1 ELSE 0 END) AS nb_nc,
-               ROUND(100.0 * SUM(CASE WHEN f.est_conforme = TRUE THEN 1 ELSE 0 END) / COUNT(*), 2) AS taux_conformite
-        FROM water_quality.gold.gold_fact_analyses f
-        JOIN water_quality.gold.gold_dim_prelevement pr ON f.id_prelevement = pr.id_prelevement
-        JOIN water_quality.gold.gold_dim_commune c ON pr.code_commune = c.code_commune
-        JOIN water_quality.gold.gold_dim_departement d ON c.code_dept = d.code_dept
-        GROUP BY d.nom_departement, d.code_dept ORDER BY nb_analyses DESC LIMIT 50
+        SELECT nom_departement, code_departement AS code_dept,
+               nb_analyses, nb_non_conformes AS nb_nc, taux_conformite
+        FROM gold_dim_departement
+        ORDER BY nb_analyses DESC LIMIT 50
     """)
     if df_depts is None:
         df_depts = gen_depts()
