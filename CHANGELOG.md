@@ -1,3 +1,9 @@
+## [1.3.9](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.8...v1.3.9) (2026-05-12)
+
+### Bug Fixes
+
+* update fastapi version constraint to allow newer releases ([af24def](https://github.com/MariamDouamba/water-quality-pipeline/commit/af24defbe7ccee80d2764e10cee984f0e7433ade))
+
 ## [1.3.8](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.7...v1.3.8) (2026-05-12)
 
 ### Bug Fixes
