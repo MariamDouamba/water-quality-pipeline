@@ -1,3 +1,9 @@
+## [1.5.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.4.0...v1.5.0) (2026-05-12)
+
+### Features
+
+* **dashboard:** editorial redesign inspired by Hydrographe aesthetic ([573231a](https://github.com/MariamDouamba/water-quality-pipeline/commit/573231a699c95e8e40c936ce002c61bcd5f5cd4e)), closes [#c77b5a](https://github.com/MariamDouamba/water-quality-pipeline/issues/c77b5a) [#0c0e12](https://github.com/MariamDouamba/water-quality-pipeline/issues/0c0e12)
+
 ## [1.4.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.3.11...v1.4.0) (2026-05-12)
 
 ### Features
