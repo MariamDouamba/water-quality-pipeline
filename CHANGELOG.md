@@ -1,3 +1,9 @@
+## [1.6.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.5.0...v1.6.0) (2026-05-12)
+
+### Features
+
+* **dashboard:** original AquaStat identity — teal/amber palette, Space Grotesk + JetBrains Mono ([f5f49c3](https://github.com/MariamDouamba/water-quality-pipeline/commit/f5f49c388d6bd4d190071b0d7e80b8701d191ec2)), closes [#050f0f](https://github.com/MariamDouamba/water-quality-pipeline/issues/050f0f) [#00cfb4](https://github.com/MariamDouamba/water-quality-pipeline/issues/00cfb4) [#e8b86d](https://github.com/MariamDouamba/water-quality-pipeline/issues/e8b86d) [#e05c5c](https://github.com/MariamDouamba/water-quality-pipeline/issues/e05c5c)
+
 ## [1.5.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.4.0...v1.5.0) (2026-05-12)
 
 ### Features
