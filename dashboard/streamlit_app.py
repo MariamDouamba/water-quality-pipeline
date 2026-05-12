@@ -144,6 +144,7 @@ def load_databricks(query):
                 df = pd.DataFrame(rows, columns=cols)
         return df, "databricks"
     except Exception as e:
+        print(f"[DATABRICKS ERROR] {type(e).__name__}: {e}")
         return None, str(e)
 
 # ── Fallback data generators ───────────────────────────────────────────────────
