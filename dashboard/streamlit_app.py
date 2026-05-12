@@ -13,116 +13,160 @@ import requests as http_requests
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="AquaStat — Qualité de l'eau en France",
+    page_title="AquaStat — Observatoire de l'eau",
     page_icon="💧",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# ── Custom CSS ─────────────────────────────────────────────────────────────────
+# ── Design system ──────────────────────────────────────────────────────────────
+# Palette teal/ambre sur noir profond — identité propre AquaStat
+# Fonts : Space Grotesk (titres) + JetBrains Mono (data) + DM Sans (corps)
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=JetBrains+Mono:wght@300;400;600&family=DM+Sans:ital,wght@0,300;0,400;1,300&display=swap');
 
-html, body, [class*="css"]           { font-family: 'DM Sans', sans-serif; }
-.stApp                               { background: #0c0e12; }
-[data-testid="stSidebar"]            { background: #0a0d14 !important;
-                                       border-right: 1px solid rgba(255,255,255,0.05); }
+html, body, [class*="css"]      { font-family: 'DM Sans', sans-serif; }
+.stApp                          { background: #050f0f; }
+[data-testid="stSidebar"]       { background: #040c0c !important;
+                                  border-right: 1px solid rgba(0,207,180,0.08); }
 
-h1, h2, h3, h4                       { font-family: 'Playfair Display', serif !important;
-                                       color: #f0ece4 !important; font-weight: 400 !important; }
+/* Titres */
+h1,h2,h3,h4 { font-family: 'Space Grotesk', sans-serif !important;
+               color: #d4e8e5 !important; font-weight: 600 !important; }
 
 /* Metrics */
-[data-testid="metric-container"]     { background: transparent; border: none; padding: 0 !important; }
+[data-testid="metric-container"]  { background: transparent; border: none; padding: 0 !important; }
 [data-testid="metric-container"] label
-                                     { color: #444c5e !important; font-size: 10px !important;
-                                       letter-spacing: 0.15em; text-transform: uppercase; }
+  { color: #2a4a47 !important; font-size: 9px !important;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace !important; }
 [data-testid="metric-container"] [data-testid="stMetricValue"]
-                                     { color: #f0ece4 !important;
-                                       font-family: 'Playfair Display', serif !important;
-                                       font-size: 2.2rem !important; font-weight: 400 !important; }
+  { color: #00cfb4 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 2rem !important; font-weight: 600 !important; }
 [data-testid="metric-container"] [data-testid="stMetricDelta"]
-                                     { color: #6b9e78 !important; }
+  { color: #4fbf8e !important; }
 
 /* Controls */
-.stSelectbox label, .stSlider label  { color: #444c5e !important; font-size: 10px !important;
-                                       letter-spacing: 0.12em; text-transform: uppercase; }
-hr                                   { border-color: rgba(255,255,255,0.05) !important; }
+.stSelectbox label, .stSlider label
+  { color: #2a4a47 !important; font-size: 9px !important;
+    letter-spacing: 0.15em; text-transform: uppercase; }
+hr { border-color: rgba(0,207,180,0.07) !important; }
 
-/* Chapter heading */
-.ch-label  { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
-             color: #444c5e; margin-bottom: 4px; font-family: 'DM Sans', sans-serif; }
-.ch-title  { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400;
-             color: #f0ece4; margin: 0 0 6px; line-height: 1.15; }
-.ch-accent { color: #c77b5a; font-style: italic; }
-.ch-sub    { color: #5a6070; font-size: 13px; line-height: 1.65; max-width: 400px;
-             margin-top: 6px; font-style: italic; }
+/* ── Composants propres AquaStat ── */
 
-/* Hero stat block */
-.hero-stat       { margin-bottom: 0; }
-.hero-stat-num   { font-family: 'Playfair Display', serif; font-size: 3rem;
-                   color: #f0ece4; line-height: 1; letter-spacing: -0.02em; }
-.hero-stat-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-                   color: #444c5e; margin-top: 4px; }
+.aq-tag {
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  letter-spacing:0.18em; text-transform:uppercase; color:#2a4a47;
+  margin-bottom:6px; display:block;
+}
+.aq-title {
+  font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700;
+  color:#d4e8e5; margin:0 0 6px; line-height:1.1;
+}
+.aq-title-accent { color:#00cfb4; }
+.aq-title-amber  { color:#e8b86d; }
+.aq-body {
+  color:#4d7a75; font-size:13px; line-height:1.7;
+  max-width:420px; margin-top:8px;
+}
 
-/* Map legend */
-.legend-row   { display: flex; align-items: center; gap: 9px;
-                margin-bottom: 8px; font-size: 11px; color: #7a8496; }
-.legend-swatch{ width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
-.legend-range { font-size: 10px; color: #444c5e; margin-left: auto; }
+/* KPI monospace block */
+.kpi-block { padding:0; }
+.kpi-val   { font-family:'JetBrains Mono',monospace; font-size:2.4rem;
+             font-weight:600; color:#00cfb4; line-height:1; }
+.kpi-label { font-family:'JetBrains Mono',monospace; font-size:9px;
+             letter-spacing:0.2em; text-transform:uppercase;
+             color:#2a4a47; margin-top:5px; }
 
-/* Parameter cards */
-.param-card { background: #12151b; border: 1px solid rgba(255,255,255,0.05);
-              border-radius: 10px; padding: 1.1rem 1.2rem; height: 100%; min-height: 120px; }
-.param-icon { font-size: 1.2rem; margin-bottom: 8px; }
-.param-name { font-family: 'Playfair Display', serif; font-size: 1rem;
-              color: #f0ece4; margin-bottom: 5px; }
-.param-desc { font-size: 11px; color: #444c5e; line-height: 1.55; font-style: italic; }
+/* Tier legend */
+.tier-row { display:flex; align-items:center; gap:10px;
+            padding:6px 0; border-bottom:1px solid rgba(0,207,180,0.05); }
+.tier-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+.tier-lbl { font-size:12px; color:#7ab8b0; flex:1; }
+.tier-rng { font-family:'JetBrains Mono',monospace; font-size:10px; color:#2a4a47; }
+.tier-cnt { font-family:'JetBrains Mono',monospace; font-size:10px;
+            color:#00cfb4; width:60px; text-align:right; }
 
-/* Commune ranking */
-.rank-section-title { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-                      color: #444c5e; margin-bottom: 12px; }
-.rank-section-hl    { font-family: 'Playfair Display', serif; font-size: 1.4rem;
-                      color: #f0ece4; margin-bottom: 16px; display: block; }
-.rank-row { display: flex; align-items: center; padding: 9px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04); gap: 10px; }
-.rank-num { font-family: 'Playfair Display', serif; font-size: 11px;
-            color: #2c3040; width: 22px; flex-shrink: 0; }
-.rank-info { flex: 1; min-width: 0; overflow: hidden; }
-.rank-name { font-size: 13px; color: #c8c0b4; font-family: 'Playfair Display', serif;
-             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rank-dept { font-size: 10px; color: #2c3040; letter-spacing: 0.1em;
-             text-transform: uppercase; margin-top: 2px; }
-.rank-bar-bg { width: 72px; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; }
-.rank-bar    { height: 3px; border-radius: 2px; }
-.rank-pct    { font-size: 12px; width: 46px; text-align: right; flex-shrink: 0; }
+/* Parameter card */
+.pcard {
+  background:#0d1f1f; border:1px solid rgba(0,207,180,0.08);
+  border-radius:10px; padding:1.1rem; min-height:128px;
+}
+.pcard-code {
+  font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.18em;
+  text-transform:uppercase; color:#2a4a47; margin-bottom:8px;
+}
+.pcard-name {
+  font-family:'Space Grotesk',sans-serif; font-size:1rem; font-weight:600;
+  color:#d4e8e5; margin-bottom:6px;
+}
+.pcard-desc { font-size:11px; color:#4d7a75; line-height:1.55; }
 
-/* Note box */
-.note-box { font-size: 11px; color: #3d4455; line-height: 1.6; padding: 1rem 0;
-            border-top: 1px solid rgba(255,255,255,0.04); }
-.note-box b { color: #5a6070; letter-spacing: 0.1em; }
+/* Ranking */
+.rank-head-tag {
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  letter-spacing:0.2em; text-transform:uppercase;
+  color:#2a4a47; margin-bottom:8px; display:block;
+}
+.rank-head-val {
+  font-family:'Space Grotesk',sans-serif; font-size:1.3rem; font-weight:700;
+  color:#d4e8e5; margin-bottom:14px; display:block;
+}
+.rrow { display:flex; align-items:center; padding:8px 0;
+        border-bottom:1px solid rgba(0,207,180,0.05); gap:10px; }
+.rrow-num {
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  color:#1a3330; width:22px; flex-shrink:0;
+}
+.rrow-info { flex:1; min-width:0; }
+.rrow-name {
+  font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:600;
+  color:#b8d4d1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.rrow-dept {
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  letter-spacing:0.1em; text-transform:uppercase; color:#1a3330; margin-top:2px;
+}
+.rrow-bar-bg { width:64px; height:3px; background:rgba(0,207,180,0.08); border-radius:2px; }
+.rrow-bar    { height:3px; border-radius:2px; }
+.rrow-pct    { font-family:'JetBrains Mono',monospace; font-size:11px;
+               width:46px; text-align:right; flex-shrink:0; }
+
+/* Note */
+.aq-note {
+  font-size:11px; color:#1a3330; line-height:1.6; padding:0.8rem 0;
+  border-top:1px solid rgba(0,207,180,0.06);
+}
 
 /* Badge */
-.badge-live { display:inline-block; background:rgba(107,158,120,0.12);
-              border:1px solid rgba(107,158,120,0.3); border-radius:100px;
-              padding:2px 11px; font-size:10px; color:#6b9e78;
-              font-family:'DM Sans',sans-serif; letter-spacing:0.1em; text-transform:uppercase; }
-.badge-demo { display:inline-block; background:rgba(199,123,90,0.12);
-              border:1px solid rgba(199,123,90,0.3); border-radius:100px;
-              padding:2px 11px; font-size:10px; color:#c77b5a;
-              font-family:'DM Sans',sans-serif; letter-spacing:0.1em; text-transform:uppercase; }
+.badge-live {
+  font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.15em;
+  text-transform:uppercase; background:rgba(79,191,142,0.1);
+  border:1px solid rgba(79,191,142,0.25); border-radius:4px;
+  padding:3px 10px; color:#4fbf8e; display:inline-block;
+}
+.badge-demo {
+  font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.15em;
+  text-transform:uppercase; background:rgba(232,184,109,0.1);
+  border:1px solid rgba(232,184,109,0.25); border-radius:4px;
+  padding:3px 10px; color:#e8b86d; display:inline-block;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Plotly dark theme ──────────────────────────────────────────────────────────
+# ── Plotly theme ───────────────────────────────────────────────────────────────
 _LAYOUT = dict(
     paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(family='DM Sans', color='#5a6070', size=11),
+    font=dict(family='DM Sans', color='#4d7a75', size=11),
     margin=dict(t=30, b=40, l=50, r=20),
 )
 _AXIS = dict(
-    gridcolor='rgba(255,255,255,0.04)', linecolor='rgba(255,255,255,0.06)',
-    tickfont=dict(color='#2c3040', size=10), zerolinecolor='rgba(255,255,255,0.04)',
+    gridcolor='rgba(0,207,180,0.05)', linecolor='rgba(0,207,180,0.08)',
+    tickfont=dict(color='#2a4a47', size=10,
+                  family='JetBrains Mono'),
+    zerolinecolor='rgba(0,207,180,0.05)',
 )
 
 def styled(fig, h=340):
@@ -131,22 +175,24 @@ def styled(fig, h=340):
     fig.update_yaxes(**_AXIS)
     return fig
 
-# ── Conformity tiers ───────────────────────────────────────────────────────────
-TIER_ORDER  = ["Source (≥ 95 %)", "Conforme (88–95 %)", "Vigilance (80–88 %)", "Alerte (< 80 %)"]
+# ── Tiers de conformité ────────────────────────────────────────────────────────
+# Nommage propre AquaStat (différent des classifications standard ARS)
+TIER_ORDER  = ["Optimal (≥ 95 %)", "Satisfaisant (88–95 %)", "Insuffisant (80–88 %)", "Critique (< 80 %)"]
 TIER_COLORS = {
-    "Source (≥ 95 %)":    "#1a3a5c",
-    "Conforme (88–95 %)": "#3b5c48",
-    "Vigilance (80–88 %)":"#6b4e2a",
-    "Alerte (< 80 %)":    "#5c1f1f",
+    "Optimal (≥ 95 %)":      "#0d3d38",
+    "Satisfaisant (88–95 %)": "#0d2f3d",
+    "Insuffisant (80–88 %)":  "#3d2d0d",
+    "Critique (< 80 %)":      "#3d0d0d",
 }
-TIER_HEX = ["#1a3a5c", "#3b5c48", "#6b4e2a", "#5c1f1f"]
+TIER_HEX    = ["#0d3d38", "#0d2f3d", "#3d2d0d", "#3d0d0d"]
+TIER_BORDER = ["#00cfb4", "#1e7abf", "#e8b86d", "#e05c5c"]
 
 def conformite_tier(tc):
     tc = float(tc) if tc is not None else 0
-    if tc >= 95: return "Source (≥ 95 %)"
-    if tc >= 88: return "Conforme (88–95 %)"
-    if tc >= 80: return "Vigilance (80–88 %)"
-    return "Alerte (< 80 %)"
+    if tc >= 95: return "Optimal (≥ 95 %)"
+    if tc >= 88: return "Satisfaisant (88–95 %)"
+    if tc >= 80: return "Insuffisant (80–88 %)"
+    return "Critique (< 80 %)"
 
 def normalize_dept_code(code):
     if str(code).upper() in ('02A', '2A'): return '2A'
@@ -178,7 +224,7 @@ def _api_url():
     except Exception:
         return os.getenv("API_URL", "http://localhost:8000")
 
-# ── Databricks loader ──────────────────────────────────────────────────────────
+# ── Loader Databricks ──────────────────────────────────────────────────────────
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_db(query):
     host, http_path, token = _creds()
@@ -186,7 +232,8 @@ def load_db(query):
         return None, "no_credentials"
     try:
         from databricks import sql
-        with sql.connect(server_hostname=host, http_path=http_path, access_token=token) as conn:
+        with sql.connect(server_hostname=host, http_path=http_path,
+                         access_token=token) as conn:
             with conn.cursor() as cur:
                 cur.execute(query)
                 cols = [d[0] for d in cur.description]
@@ -197,12 +244,13 @@ def load_db(query):
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_france_geojson():
     try:
-        url = "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson"
+        url = ("https://raw.githubusercontent.com/gregoiredavid/"
+               "france-geojson/master/departements-version-simplifiee.geojson")
         return http_requests.get(url, timeout=10).json()
     except Exception:
         return None
 
-# ── Demo data ──────────────────────────────────────────────────────────────────
+# ── Données de démonstration ───────────────────────────────────────────────────
 def _demo_temporal():
     m = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
     c = [24200,22800,26100,25400,27300,28900,31200,29800,26700,25100,23400,21700]
@@ -225,30 +273,31 @@ def _demo_depts():
     rng = np.random.default_rng(42)
     nb  = sorted(rng.integers(50000, 500000, 20).tolist(), reverse=True)
     tc  = [round(rng.uniform(78, 100), 1) for _ in range(20)]
-    nc  = [int(n * (1 - t/100)) for n, t in zip(nb, tc)]
+    nc  = [int(n * (1 - t / 100)) for n, t in zip(nb, tc)]
     return pd.DataFrame({'nom_departement': noms, 'code_dept': codes,
                          'nb_analyses': nb, 'nb_nc': nc, 'taux_conformite': tc})
 
-def _demo_best():
-    communes = ['Lyon','Saint-Paul','Jarrie','Clermont-Ferrand','Tours',
-                'Boulogne-Billancourt','Annecy','Orléans','Cannes','Louveciennes']
-    codes    = ['69','974','38','63','37','92','74','45','06','78']
-    depts    = ['Rhône','La Réunion','Isère','Puy-de-Dôme','Indre-et-Loire',
-                'Hauts-de-Seine','Haute-Savoie','Loiret','Alpes-Maritimes','Yvelines']
-    return pd.DataFrame({'nom_commune': communes, 'code_dept': codes,
-                         'nom_departement': depts, 'taux_conformite': [100.0]*10})
+def _demo_top():
+    return pd.DataFrame({
+        'nom_commune': ['Lyon','Clermont-Ferrand','Tours','Annecy','Orléans',
+                        'Boulogne-Billancourt','Cannes','Jarrie','Saint-Paul','Louveciennes'],
+        'code_dept':   ['69','63','37','74','45','92','06','38','974','78'],
+        'nom_departement': ['Rhône','Puy-de-Dôme','Indre-et-Loire','Haute-Savoie','Loiret',
+                            'Hauts-de-Seine','Alpes-Maritimes','Isère','La Réunion','Yvelines'],
+        'taux_conformite': [100.0]*10,
+    })
 
-def _demo_worst():
-    communes = ['Sennecey-le-Grand','Gueugnon','Villers-sur-Mer','Sinnamary','Vigeois',
-                'Allassac','Romilly-sur-Seine','Mouans-Sartoux','St-Michel-de-Boulogne','Labastide-Rouairoux']
-    codes    = ['71','71','14','973','19','19','10','06','07','81']
-    depts    = ['Saône-et-Loire','Saône-et-Loire','Calvados','Guyane','Corrèze',
-                'Corrèze','Aube','Alpes-Maritimes','Ardèche','Tarn']
-    tc       = [6.3,10.7,16.4,25.5,30.8,30.9,44.9,47.1,48.0,48.2]
-    return pd.DataFrame({'nom_commune': communes, 'code_dept': codes,
-                         'nom_departement': depts, 'taux_conformite': tc})
+def _demo_bottom():
+    return pd.DataFrame({
+        'nom_commune': ['Sennecey-le-Grand','Gueugnon','Villers-sur-Mer','Sinnamary','Vigeois',
+                        'Allassac','Romilly-sur-Seine','Mouans-Sartoux','Vielmur-sur-Agout','Labastide-Rouairoux'],
+        'code_dept':   ['71','71','14','973','19','19','10','06','81','81'],
+        'nom_departement': ['Saône-et-Loire','Saône-et-Loire','Calvados','Guyane','Corrèze',
+                            'Corrèze','Aube','Alpes-Maritimes','Tarn','Tarn'],
+        'taux_conformite': [6.3,10.7,16.4,25.5,30.8,30.9,44.9,47.1,47.8,48.2],
+    })
 
-# ── Main data loader ───────────────────────────────────────────────────────────
+# ── Chargement principal ───────────────────────────────────────────────────────
 @st.cache_data(ttl=3600, show_spinner=False)
 def get_all_data():
     source = "simulation"
@@ -256,17 +305,17 @@ def get_all_data():
     df_kpis, _ = load_db("""
         SELECT COUNT(*) AS total_analyses,
                SUM(CASE WHEN est_conforme = 'Non conforme' THEN 1 ELSE 0 END) AS total_nc,
-               ROUND(SUM(CASE WHEN est_conforme = 'Conforme' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS taux_conformite
+               ROUND(SUM(CASE WHEN est_conforme = 'Conforme' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) AS taux_conformite
         FROM gold_fact_analyses
     """)
 
     df_temp, err = load_db("""
-        SELECT DATE_FORMAT(date_prelevement, 'MMM') AS mois,
+        SELECT DATE_FORMAT(date_prelevement,'MMM') AS mois,
                MONTH(date_prelevement) AS mois_num,
                COUNT(*) AS nb_prelevements
         FROM gold_dim_prelevement
         WHERE date_prelevement IS NOT NULL
-        GROUP BY 1, 2 ORDER BY 2
+        GROUP BY 1,2 ORDER BY 2
     """)
     if df_temp is None:
         df_temp = _demo_temporal()
@@ -274,103 +323,100 @@ def get_all_data():
         source = "databricks"
 
     df_params, _ = load_db("""
-        SELECT p.libelle_parametre AS nom_parametre,
-               COUNT(*) AS nb_nc
+        SELECT p.libelle_parametre AS nom_parametre, COUNT(*) AS nb_nc
         FROM gold_fact_analyses f
         JOIN gold_dim_parametre p ON f.parametre_code = p.cdparametresiseeaux
         WHERE f.est_conforme = 'Non conforme'
-        GROUP BY p.libelle_parametre
-        ORDER BY nb_nc DESC LIMIT 20
+        GROUP BY p.libelle_parametre ORDER BY nb_nc DESC LIMIT 20
     """)
     if df_params is None:
         df_params = _demo_params()
 
     df_depts, _ = load_db("""
-        SELECT nom_departement,
-               code_departement AS code_dept,
-               nb_analyses,
-               nb_non_conformes AS nb_nc,
-               taux_conformite
-        FROM gold_dim_departement
-        ORDER BY nb_analyses DESC LIMIT 96
+        SELECT nom_departement, code_departement AS code_dept,
+               nb_analyses, nb_non_conformes AS nb_nc, taux_conformite
+        FROM gold_dim_departement ORDER BY nb_analyses DESC LIMIT 96
     """)
     if df_depts is None:
         df_depts = _demo_depts()
 
-    df_best, _ = load_db("""
-        SELECT f.commune AS nom_commune,
-               f.departement_code AS code_dept,
-               d.nom_departement,
-               COUNT(*) AS nb_analyses,
-               ROUND(SUM(CASE WHEN f.est_conforme = 'Conforme' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS taux_conformite
+    df_top, _ = load_db("""
+        SELECT f.commune AS nom_commune, f.departement_code AS code_dept,
+               d.nom_departement, COUNT(*) AS nb_analyses,
+               ROUND(SUM(CASE WHEN f.est_conforme='Conforme' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) AS taux_conformite
         FROM gold_fact_analyses f
-        LEFT JOIN gold_dim_departement d ON f.departement_code = d.code_departement
+        LEFT JOIN gold_dim_departement d ON f.departement_code=d.code_departement
         WHERE f.commune IS NOT NULL
-        GROUP BY f.commune, f.departement_code, d.nom_departement
+        GROUP BY f.commune,f.departement_code,d.nom_departement
         HAVING COUNT(*) >= 200
-        ORDER BY taux_conformite DESC, nb_analyses DESC
-        LIMIT 10
+        ORDER BY taux_conformite DESC, nb_analyses DESC LIMIT 10
     """)
-    if df_best is None:
-        df_best = _demo_best()
+    if df_top is None:
+        df_top = _demo_top()
 
-    df_worst, _ = load_db("""
-        SELECT f.commune AS nom_commune,
-               f.departement_code AS code_dept,
-               d.nom_departement,
-               COUNT(*) AS nb_analyses,
-               ROUND(SUM(CASE WHEN f.est_conforme = 'Conforme' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS taux_conformite
+    df_bottom, _ = load_db("""
+        SELECT f.commune AS nom_commune, f.departement_code AS code_dept,
+               d.nom_departement, COUNT(*) AS nb_analyses,
+               ROUND(SUM(CASE WHEN f.est_conforme='Conforme' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) AS taux_conformite
         FROM gold_fact_analyses f
-        LEFT JOIN gold_dim_departement d ON f.departement_code = d.code_departement
+        LEFT JOIN gold_dim_departement d ON f.departement_code=d.code_departement
         WHERE f.commune IS NOT NULL
-        GROUP BY f.commune, f.departement_code, d.nom_departement
+        GROUP BY f.commune,f.departement_code,d.nom_departement
         HAVING COUNT(*) >= 200
-        ORDER BY taux_conformite ASC
-        LIMIT 10
+        ORDER BY taux_conformite ASC LIMIT 10
     """)
-    if df_worst is None:
-        df_worst = _demo_worst()
+    if df_bottom is None:
+        df_bottom = _demo_bottom()
 
-    return df_kpis, df_temp, df_params, df_depts, df_best, df_worst, source
+    return df_kpis, df_temp, df_params, df_depts, df_top, df_bottom, source
 
-# ── Parameter catalogue ────────────────────────────────────────────────────────
-PARAMS_INFO = [
-    {"icon": "∿",  "name": "pH",            "desc": "Acidité. Hors 6,5–9, l'eau corrode les conduites ou irrite les muqueuses."},
-    {"icon": "◌",  "name": "Turbidité",     "desc": "Particules en suspension. Eau trouble = micro-organismes possibles."},
-    {"icon": "≋",  "name": "Conductivité",  "desc": "Sels minéraux dissous. Une anomalie signale un changement de source ou une pollution."},
-    {"icon": "⚡", "name": "E. coli",        "desc": "Bactérie fécale. Sa présence indique une contamination récente, risque digestif."},
-    {"icon": "◎",  "name": "Entérocoques",  "desc": "Indicateur fécal complémentaire, plus persistant qu'E. coli dans le réseau."},
-    {"icon": "—",  "name": "Coliformes",    "desc": "Famille bactérienne. Excès révèle un défaut de désinfection ou une intrusion."},
-    {"icon": "△",  "name": "NH₄ (Ammonium)","desc": "Trace de pollution azotée, précurseur de nitrates. Surveille les effluents agricoles."},
-    {"icon": "⊙",  "name": "Bact. aér.",    "desc": "Flore globale à 22 °C. Un pic traduit une stagnation ou un biofilm dans le réseau."},
-    {"icon": "~",  "name": "Odeur",         "desc": "Test organoleptique. Une odeur persistante signale un traitement inadapté ou une contamination."},
+# ── Répertoire des indicateurs ─────────────────────────────────────────────────
+INDICATORS = [
+    {"code":"pH",  "name":"Potentiel hydrogène",
+     "desc":"Acidité de l'eau. Hors de la plage 6,5–9, le réseau se corrode et des irritations apparaissent."},
+    {"code":"NTU", "name":"Turbidité",
+     "desc":"Matières en suspension. Une eau trouble peut masquer des micro-organismes et réduire l'efficacité de la désinfection."},
+    {"code":"µS/cm","name":"Conductivité",
+     "desc":"Concentration en sels minéraux dissous. Toute variation soudaine signale un changement de source ou une intrusion."},
+    {"code":"UFC", "name":"E. coli",
+     "desc":"Indicateur de contamination fécale récente. Sa détection déclenche une alerte sanitaire immédiate."},
+    {"code":"UFC", "name":"Entérocoques",
+     "desc":"Indicateur fécal plus résistant que E. coli. Utile pour détecter les contaminations anciennes dans le réseau."},
+    {"code":"UFC", "name":"Bactéries coliformes",
+     "desc":"Famille bactérienne large. Un excès révèle un défaut de désinfection ou une intrusion d'eau extérieure."},
+    {"code":"mg/L","name":"Ammonium (NH₄⁺)",
+     "desc":"Traceur de pollution azotée agricole ou industrielle, précurseur de la formation de nitrites en réseau."},
+    {"code":"UFC", "name":"Bactéries aérobies",
+     "desc":"Flore bactérienne globale à 22 °C. Un pic trahit une stagnation prolongée ou un biofilm dans la canalisation."},
+    {"code":"seuil","name":"Odeur et saveur",
+     "desc":"Tests organoleptiques réglementés. Une anomalie persistante indique un sous-dosage ou une contamination chimique."},
 ]
 
-# ── HTML builders ──────────────────────────────────────────────────────────────
-def _param_card(info):
+# ── Constructeurs HTML ──────────────────────────────────────────────────────────
+def _indicator_card(info):
     return f"""
-<div class="param-card">
-  <div class="param-icon">{info['icon']}</div>
-  <div class="param-name">{info['name']}</div>
-  <div class="param-desc">{info['desc']}</div>
+<div class="pcard">
+  <div class="pcard-code">{info['code']}</div>
+  <div class="pcard-name">{info['name']}</div>
+  <div class="pcard-desc">{info['desc']}</div>
 </div>"""
 
-def _rank_row(rank, nom, code, dept, pct, is_best):
-    bar_color = "#4a7c6f" if is_best else "#8b3030"
-    pct_color = "#6b9e78" if is_best else "#c77b5a"
-    bar_w     = min(100, max(2, float(pct) if pct is not None else 0))
-    dept_str  = f"{code} · {str(dept).upper()}" if dept else code
+def _ranking_row(rank, nom, code, dept, pct, good):
+    bar_color = "#00cfb4" if good else "#e05c5c"
+    pct_color = "#00cfb4" if good else "#e05c5c"
+    bar_w     = min(100, max(1, float(pct) if pct is not None else 0))
+    dept_str  = f"{code} — {str(dept).upper()}" if dept else code
     return f"""
-<div class="rank-row">
-  <span class="rank-num">{rank:02d}</span>
-  <div class="rank-info">
-    <div class="rank-name">{nom}</div>
-    <div class="rank-dept">{dept_str}</div>
+<div class="rrow">
+  <span class="rrow-num">{rank:02d}</span>
+  <div class="rrow-info">
+    <div class="rrow-name">{nom}</div>
+    <div class="rrow-dept">{dept_str}</div>
   </div>
-  <div class="rank-bar-bg">
-    <div class="rank-bar" style="width:{bar_w}%;background:{bar_color};"></div>
+  <div class="rrow-bar-bg">
+    <div class="rrow-bar" style="width:{bar_w}%;background:{bar_color};"></div>
   </div>
-  <span class="rank-pct" style="color:{pct_color};">{float(pct):.1f} %</span>
+  <span class="rrow-pct" style="color:{pct_color};">{float(pct):.1f}&nbsp;%</span>
 </div>"""
 
 # ── SIDEBAR ────────────────────────────────────────────────────────────────────
@@ -378,117 +424,152 @@ with st.sidebar:
     st.markdown("### 💧 AquaStat")
     st.divider()
     st.caption("Contrôle sanitaire 2024 · data.gouv.fr")
-    top_n = st.slider("Top N paramètres", 5, 20, 12)
-    show_nc_only = st.checkbox("Depts avec non-conformités uniquement", value=False)
+    top_n       = st.slider("Indicateurs à afficher", 5, 20, 12)
+    nc_only     = st.checkbox("Départements avec NC uniquement", value=False)
     st.divider()
-    st.markdown(f"[FastAPI Docs]({_api_url()}/docs)")
-    st.markdown("[GitHub](https://github.com/MariamDouamba/water-quality-pipeline)")
+    st.markdown(f"[API REST]({_api_url()}/docs) · [GitHub](https://github.com/MariamDouamba/water-quality-pipeline)")
 
-# ── LOAD ───────────────────────────────────────────────────────────────────────
+# ── CHARGEMENT ─────────────────────────────────────────────────────────────────
 with st.spinner("Chargement…"):
-    df_kpis, df_temp, df_params, df_depts, df_best, df_worst, source = get_all_data()
+    df_kpis, df_temp, df_params, df_depts, df_top, df_bottom, source = get_all_data()
     geojson = load_france_geojson()
 
 is_live = source == "databricks"
 
-# ── KPIs ───────────────────────────────────────────────────────────────────────
 if df_kpis is not None and len(df_kpis) > 0:
-    row      = df_kpis.iloc[0]
-    total    = int(row['total_analyses'])
-    total_nc = int(row['total_nc'])
-    taux     = float(row['taux_conformite'])
+    r        = df_kpis.iloc[0]
+    total    = int(r['total_analyses'])
+    total_nc = int(r['total_nc'])
+    taux     = float(r['taux_conformite'])
 else:
     total, total_nc, taux = 12_645_691, 28_140, 99.78
 
-# ── HERO ───────────────────────────────────────────────────────────────────────
-badge = f'<span class="badge-live">🟢 Live</span>' if is_live else f'<span class="badge-demo">🟡 Démo</span>'
+# ═══════════════════════════════════════════════════════════════════════════════
+# BLOC 1 — EN-TÊTE
+# ═══════════════════════════════════════════════════════════════════════════════
+badge = ('<span class="badge-live">LIVE · Databricks</span>'
+         if is_live else '<span class="badge-demo">DÉMO · Données simulées</span>')
+
 st.markdown(f"""
-<div style="padding: 2rem 0 1rem;">
-  <div style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#444c5e;margin-bottom:6px;">
-    AQUASTAT — ATLAS DE LA QUALITÉ DE L'EAU EN FRANCE &nbsp;{badge}
+<div style="padding:2rem 0 0.5rem;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;
+                 letter-spacing:0.22em;text-transform:uppercase;color:#2a4a47;">
+      AQUASTAT — OBSERVATOIRE DE LA QUALITÉ DE L'EAU EN FRANCE · 2024
+    </span>
+    {badge}
   </div>
-  <h1 style="font-family:'Playfair Display',serif;font-size:3rem;color:#f0ece4;font-weight:400;margin:0 0 4px;line-height:1.1;">
-    L'eau de France,
+  <h1 style="font-family:'Space Grotesk',sans-serif;font-size:2.8rem;
+             font-weight:700;color:#d4e8e5;margin:0;line-height:1.05;">
+    Chaque goutte <span style="color:#00cfb4;">analysée.</span>
   </h1>
-  <h1 style="font-family:'Playfair Display',serif;font-size:3rem;color:#c77b5a;font-weight:400;font-style:italic;margin:0 0 1.5rem;line-height:1.1;">
-    robinet par robinet.
-  </h1>
-  <p style="color:#5a6070;font-size:13px;font-style:italic;max-width:540px;line-height:1.7;margin:0;">
-    37 000 communes. 9 paramètres. Un contrôle sanitaire permanent.
-    Traité par le pipeline Databricks water-quality-pipeline, mis à jour annuellement.
+  <p style="color:#4d7a75;font-size:13px;line-height:1.75;max-width:560px;margin:12px 0 0;">
+    AquaStat agrège les résultats du contrôle sanitaire officiel de l'eau potable
+    distribué aux robinets français. Les données brutes, issues de data.gouv.fr,
+    sont transformées par un pipeline Databricks avant d'alimenter ce tableau de bord.
   </p>
 </div>
 """, unsafe_allow_html=True)
 
-h1, h2, h3, h4 = st.columns(4)
-h1.metric("Communes", "34 811")
-h2.metric("Prélèvements", f"{total//1000:,}k")
-h3.metric("Non-conformes", f"{total_nc:,}")
-h4.metric("Taux national", f"{taux} %")
+# KPI row — style monospace technique
+k1, k2, k3, k4 = st.columns(4)
 
-st.markdown('<hr class="section-divider" style="margin:2rem 0;">', unsafe_allow_html=True)
+def _kpi(col, val, lbl):
+    col.markdown(f"""
+<div class="kpi-block">
+  <div class="kpi-val">{val}</div>
+  <div class="kpi-label">{lbl}</div>
+</div>""", unsafe_allow_html=True)
 
-# ── CHAPITRE 1 — LA CARTE ──────────────────────────────────────────────────────
+_kpi(k1, f"{total/1_000_000:.1f}M",  "Résultats d'analyse")
+_kpi(k2, "291 604",                   "Prélèvements réalisés")
+_kpi(k3, "34 811",                    "Communes surveillées")
+_kpi(k4, f"{taux} %",                 "Taux de conformité national")
+
+st.markdown('<hr style="margin:2rem 0;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BLOC 2 — RÉPARTITION GÉOGRAPHIQUE
+# ═══════════════════════════════════════════════════════════════════════════════
 col_l, col_r = st.columns([1, 2], gap="large")
 
 with col_l:
     st.markdown("""
-<div class="ch-label">Chapitre 1 / 4 — La cartographie</div>
-<h2 class="ch-title">La France,<br><span class="ch-accent">territoire par territoire.</span></h2>
-<p class="ch-sub">Chaque département coloré selon son niveau moyen de conformité.
-Quatre niveaux reflètent la réalité sanitaire telle que calculée par le pipeline.</p>
+<span class="aq-tag">Répartition géographique</span>
+<h2 class="aq-title">Conformité<br>par <span class="aq-title-accent">département.</span></h2>
+<p class="aq-body">Quatre niveaux de qualité pour rendre lisible la réalité du réseau
+de distribution français. Calculés à partir des taux moyens de conformité départementaux.</p>
 """, unsafe_allow_html=True)
 
-    st.markdown('<div style="margin-top:1.5rem;">', unsafe_allow_html=True)
-    for tier, color in zip(TIER_ORDER, TIER_HEX):
-        ranges = ["≥ 95 %", "88 – 95 %", "80 – 88 %", "< 80 %"]
-        label  = tier.split(" (")[0]
-        rang   = ranges[TIER_ORDER.index(tier)]
-        st.markdown(f"""
-<div class="legend-row">
-  <div class="legend-swatch" style="background:{color};"></div>
-  <span>{label}</span>
-  <span class="legend-range">{rang}</span>
-</div>""", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Tier counts
     if df_depts is not None and 'taux_conformite' in df_depts.columns:
-        df_tiers = df_depts.copy()
-        df_tiers['tier'] = df_tiers['taux_conformite'].apply(conformite_tier)
-        tier_counts = df_tiers['tier'].value_counts()
+        df_t = df_depts.copy()
+        df_t['tier'] = df_t['taux_conformite'].apply(conformite_tier)
+        cnt = df_t['tier'].value_counts()
+        ranges = ["≥ 95 %", "88–95 %", "80–88 %", "< 80 %"]
         st.markdown('<div style="margin-top:1.5rem;">', unsafe_allow_html=True)
-        for tier in TIER_ORDER:
-            cnt = tier_counts.get(tier, 0)
-            label = tier.split(" (")[0]
+        for tier, color, border, rng in zip(TIER_ORDER, TIER_HEX, TIER_BORDER, ranges):
+            lbl = tier.split(" (")[0]
+            n   = cnt.get(tier, 0)
             st.markdown(f"""
-<div style="display:flex;justify-content:space-between;padding:4px 0;
- border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:#5a6070;">
-  <span>{label}</span><span style="color:#f0ece4;">{cnt} depts</span>
+<div class="tier-row">
+  <div class="tier-dot" style="background:{color};box-shadow:0 0 0 1px {border}33;"></div>
+  <span class="tier-lbl">{lbl}</span>
+  <span class="tier-rng">{rng}</span>
+  <span class="tier-cnt">{n} dép.</span>
 </div>""", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="margin-top:2rem;">', unsafe_allow_html=True)
+    fig_gauge = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=taux,
+        number={'suffix': ' %', 'font': {'size': 28, 'color': '#00cfb4',
+                'family': 'JetBrains Mono'}},
+        title={'text': "Taux national 2024", 'font': {'color': '#2a4a47', 'size': 11,
+               'family': 'JetBrains Mono'}},
+        gauge={
+            'axis': {'range': [80, 100], 'tickfont': {'color': '#1a3330', 'size': 9,
+                     'family': 'JetBrains Mono'}},
+            'bar': {'color': '#00cfb4', 'thickness': 0.22},
+            'steps': [
+                {'range': [80, 88], 'color': 'rgba(224,92,92,0.12)'},
+                {'range': [88, 95], 'color': 'rgba(232,184,109,0.1)'},
+                {'range': [95,100], 'color': 'rgba(0,207,180,0.08)'},
+            ],
+            'threshold': {'line': {'color': '#e8b86d', 'width': 2},
+                          'thickness': 0.8, 'value': 95},
+        }
+    ))
+    fig_gauge.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#4d7a75'), height=240,
+        margin=dict(t=50, b=10, l=20, r=20)
+    )
+    st.plotly_chart(fig_gauge, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col_r:
     if geojson and df_depts is not None and 'taux_conformite' in df_depts.columns:
         df_map = df_depts.copy()
-        df_map['code_geo'] = df_map['code_dept'].apply(normalize_dept_code)
+        df_map['code_geo']       = df_map['code_dept'].apply(normalize_dept_code)
         df_map['taux_conformite'] = pd.to_numeric(df_map['taux_conformite'], errors='coerce')
-        df_map['tier'] = df_map['taux_conformite'].apply(conformite_tier)
-        df_map['tier'] = pd.Categorical(df_map['tier'], categories=TIER_ORDER, ordered=True)
+        df_map['niveau']         = df_map['taux_conformite'].apply(conformite_tier)
+        df_map['niveau']         = pd.Categorical(df_map['niveau'],
+                                                   categories=TIER_ORDER, ordered=True)
 
         fig_map = px.choropleth(
             df_map,
             geojson=geojson,
             locations='code_geo',
             featureidkey='properties.code',
-            color='tier',
+            color='niveau',
             color_discrete_map=TIER_COLORS,
-            category_orders={'tier': TIER_ORDER},
+            category_orders={'niveau': TIER_ORDER},
             hover_name='nom_departement',
             hover_data={
                 'taux_conformite': ':.1f',
                 'nb_analyses': ':,',
-                'tier': False,
+                'niveau': False,
                 'code_geo': False,
             },
             labels={'taux_conformite': 'Conformité %', 'nb_analyses': 'Analyses'},
@@ -499,191 +580,166 @@ with col_r:
             geo=dict(bgcolor='rgba(0,0,0,0)'),
             legend=dict(
                 title=None,
-                font=dict(color='#5a6070', size=11),
+                font=dict(color='#4d7a75', size=10, family='JetBrains Mono'),
                 bgcolor='rgba(0,0,0,0)',
                 orientation='h',
-                yanchor='bottom', y=-0.08,
-                xanchor='left', x=0,
+                yanchor='bottom', y=-0.1,
+                xanchor='left',   x=0,
             ),
-            margin=dict(t=0, b=0, l=0, r=0),
-            height=500,
+            margin=dict(t=10, b=20, l=0, r=0),
+            height=480,
         )
         st.plotly_chart(fig_map, use_container_width=True)
     else:
-        st.info("Carte non disponible.")
+        st.info("Carte non disponible (GeoJSON ou données manquants).")
 
     st.markdown("""
-<div class="note-box">
-<b>NOTE</b> — Une non-conformité ponctuelle ne signifie pas que l'eau est impropre à la consommation.
-Les seuils réglementaires sont volontairement prudents ; les seuils sanitaires effectifs sont nettement supérieurs.
-Pour l'avis officiel sur votre eau, consultez l'ARS de votre région.
+<div class="aq-note">
+<b>Avertissement</b> — Un taux de non-conformité, même élevé, ne signifie pas que l'eau
+est impropre à la consommation. Les seuils réglementaires restent très prudents par rapport
+aux seuils sanitaires réels. En cas de doute, consultez votre Agence Régionale de Santé.
 </div>""", unsafe_allow_html=True)
 
-st.markdown('<hr class="section-divider" style="margin:2rem 0;">', unsafe_allow_html=True)
+st.markdown('<hr style="margin:2rem 0;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
 
-# ── CHAPITRE 2 — PARAMÈTRES ────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# BLOC 3 — INDICATEURS RÉGLEMENTAIRES
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="ch-label">Chapitre 2 / 4 — Que mesure-t-on ?</div>
-<h2 class="ch-title">Neuf paramètres <span class="ch-accent">sous surveillance.</span></h2>
-<p class="ch-sub">pH, turbidité, conductivité, bactéries coliformes, E. coli, entérocoques, ammonium,
-bactéries aérobies revivifiables, odeur. Chacun a son seuil, son protocole, sa fréquence.</p>
+<span class="aq-tag">Référentiel technique</span>
+<h2 class="aq-title">9 indicateurs <span class="aq-title-amber">réglementaires.</span></h2>
+<p class="aq-body">Le contrôle sanitaire de l'eau repose sur neuf mesures obligatoires,
+chacune ciblant un risque sanitaire précis défini par la directive européenne sur l'eau potable.</p>
 """, unsafe_allow_html=True)
 
 st.markdown('<div style="margin-top:1rem;">', unsafe_allow_html=True)
-for i in range(0, 9, 3):
+for row_start in range(0, 9, 3):
     cols = st.columns(3, gap="small")
     for j, col in enumerate(cols):
-        if i + j < len(PARAMS_INFO):
+        idx = row_start + j
+        if idx < len(INDICATORS):
             with col:
-                st.markdown(_param_card(PARAMS_INFO[i + j]), unsafe_allow_html=True)
+                st.markdown(_indicator_card(INDICATORS[idx]), unsafe_allow_html=True)
     st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<hr class="section-divider" style="margin:2rem 0;">', unsafe_allow_html=True)
+st.markdown('<hr style="margin:2rem 0;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
 
-# ── CHAPITRE 3 — LE PALMARÈS ───────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# BLOC 4 — CLASSEMENT DES COMMUNES
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="ch-label">Chapitre 3 / 4 — Le palmarès des terroirs</div>
-<h2 class="ch-title">Les <span class="ch-accent">exemplaires</span> et les <span class="ch-accent">fragiles.</span></h2>
-<p class="ch-sub">La majorité des écarts se concentrent sur quelques communes — petites, isolées, parfois saisonnières.
-Connaître la donnée, c'est la première étape pour la corriger.</p>
+<span class="aq-tag">Classement 2024 — Communes (min. 200 analyses)</span>
+<h2 class="aq-title">Meilleures et <span class="aq-title-amber">moins bonnes</span> performances.</h2>
+<p class="aq-body">Basé sur les données ARS consolidées par le pipeline. Seules les communes
+disposant d'au moins 200 analyses sont incluses pour garantir la représentativité statistique.</p>
 """, unsafe_allow_html=True)
 
 st.markdown('<div style="height:1rem;"></div>', unsafe_allow_html=True)
-col_best, col_worst = st.columns(2, gap="large")
+col_top, col_bot = st.columns(2, gap="large")
 
-with col_best:
+with col_top:
     st.markdown("""
-<div class="rank-section-title">Top conformité</div>
-<span class="rank-section-hl">Les exemplaires</span>
+<span class="rank-head-tag">Taux de conformité · Top 10</span>
+<span class="rank-head-val" style="color:#00cfb4;">En tête du classement</span>
 """, unsafe_allow_html=True)
-    if df_best is not None and len(df_best) > 0:
-        html_best = ""
-        for i, row in df_best.reset_index(drop=True).iterrows():
-            html_best += _rank_row(
-                i + 1,
-                row.get('nom_commune', '—'),
-                row.get('code_dept', ''),
-                row.get('nom_departement', ''),
-                row.get('taux_conformite', 100),
-                True,
-            )
-        st.markdown(html_best, unsafe_allow_html=True)
+    if df_top is not None and len(df_top) > 0:
+        rows_html = "".join(
+            _ranking_row(i+1, r['nom_commune'], r.get('code_dept',''),
+                         r.get('nom_departement',''), r.get('taux_conformite',100), True)
+            for i, r in df_top.reset_index(drop=True).iterrows()
+        )
+        st.markdown(rows_html, unsafe_allow_html=True)
 
-with col_worst:
+with col_bot:
     st.markdown("""
-<div class="rank-section-title">Bas du classement</div>
-<span class="rank-section-hl">Les fragiles</span>
+<span class="rank-head-tag">Taux de conformité · Bas du classement</span>
+<span class="rank-head-val" style="color:#e05c5c;">Points de vigilance</span>
 """, unsafe_allow_html=True)
-    if df_worst is not None and len(df_worst) > 0:
-        html_worst = ""
-        for i, row in df_worst.reset_index(drop=True).iterrows():
-            html_worst += _rank_row(
-                i + 1,
-                row.get('nom_commune', '—'),
-                row.get('code_dept', ''),
-                row.get('nom_departement', ''),
-                row.get('taux_conformite', 0),
-                False,
-            )
-        st.markdown(html_worst, unsafe_allow_html=True)
+    if df_bottom is not None and len(df_bottom) > 0:
+        rows_html = "".join(
+            _ranking_row(i+1, r['nom_commune'], r.get('code_dept',''),
+                         r.get('nom_departement',''), r.get('taux_conformite',0), False)
+            for i, r in df_bottom.reset_index(drop=True).iterrows()
+        )
+        st.markdown(rows_html, unsafe_allow_html=True)
 
-st.markdown('<hr class="section-divider" style="margin:2rem 0;">', unsafe_allow_html=True)
+st.markdown('<hr style="margin:2rem 0;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
 
-# ── CHAPITRE 4 — ÉVOLUTION & NC ────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# BLOC 5 — DONNÉES DÉTAILLÉES
+# ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<div class="ch-label">Chapitre 4 / 4 — Lectures complémentaires</div>
-<h2 class="ch-title">Vu <span class="ch-accent">autrement.</span></h2>
+<span class="aq-tag">Analyses détaillées</span>
+<h2 class="aq-title">Cadence et <span class="aq-title-accent">non-conformités.</span></h2>
 """, unsafe_allow_html=True)
 
-col_ev, col_nc = st.columns(2, gap="large")
+c1, c2 = st.columns(2, gap="large")
 
-with col_ev:
-    st.caption("Densité mensuelle — Prélèvements")
-    fig_t = go.Figure()
-    fig_t.add_trace(go.Bar(
+with c1:
+    st.markdown('<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#2a4a47;">Prélèvements par mois</span>', unsafe_allow_html=True)
+    fig_t = go.Figure(go.Bar(
         x=df_temp['mois'], y=df_temp['nb_prelevements'],
-        marker_color='#1a3a5c',
-        hovertemplate='<b>%{x}</b><br>%{y:,.0f} prélèvements<extra></extra>',
+        marker=dict(
+            color=df_temp['nb_prelevements'].tolist(),
+            colorscale=[[0,'#0d3d38'],[1,'#00cfb4']],
+            showscale=False,
+        ),
+        hovertemplate='<b>%{x}</b> · %{y:,.0f} prélèvements<extra></extra>',
     ))
-    st.plotly_chart(styled(fig_t, 300), use_container_width=True)
+    st.plotly_chart(styled(fig_t, 280), use_container_width=True)
 
-with col_nc:
-    st.caption(f"Top {top_n} paramètres non conformes")
+with c2:
+    st.markdown(f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#2a4a47;">Top {top_n} indicateurs non conformes</span>', unsafe_allow_html=True)
     df_p = df_params.head(top_n).sort_values('nb_nc')
     fig_p = go.Figure(go.Bar(
         x=df_p['nb_nc'], y=df_p['nom_parametre'],
         orientation='h',
         marker=dict(
             color=df_p['nb_nc'].tolist(),
-            colorscale=[[0, '#1a3a5c'], [0.5, '#6b4e2a'], [1, '#5c1f1f']],
+            colorscale=[[0,'#0d3d38'],[0.5,'#3d2d0d'],[1,'#3d0d0d']],
             showscale=False,
         ),
-        hovertemplate='<b>%{y}</b><br>%{x:,.0f} NC<extra></extra>',
+        hovertemplate='<b>%{y}</b> · %{x:,.0f} NC<extra></extra>',
     ))
-    st.plotly_chart(styled(fig_p, 300), use_container_width=True)
+    st.plotly_chart(styled(fig_p, 280), use_container_width=True)
 
-# Gauge + table
-col_g, col_t = st.columns([1, 2], gap="large")
-
-with col_g:
-    fig_gauge = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=taux,
-        number={'suffix': ' %', 'font': {'size': 36, 'color': '#f0ece4',
-                'family': 'Playfair Display'}},
-        title={'text': "Taux national pondéré", 'font': {'color': '#444c5e', 'size': 12,
-               'family': 'DM Sans'}},
-        gauge={
-            'axis': {'range': [80, 100], 'tickfont': {'color': '#2c3040', 'size': 9}},
-            'bar': {'color': '#1a3a5c', 'thickness': 0.28},
-            'steps': [
-                {'range': [80, 88], 'color': 'rgba(92,31,31,0.25)'},
-                {'range': [88, 95], 'color': 'rgba(107,78,42,0.2)'},
-                {'range': [95, 100],'color': 'rgba(26,58,92,0.2)'},
-            ],
-            'threshold': {'line': {'color': '#c77b5a', 'width': 2}, 'thickness': 0.8, 'value': 95},
-        }
-    ))
-    fig_gauge.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#5a6070'), height=320,
-        margin=dict(t=60, b=20, l=30, r=30)
+# Tableau départements
+if df_depts is not None:
+    st.markdown('<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#2a4a47;display:block;margin-bottom:8px;">Données par département</span>', unsafe_allow_html=True)
+    df_d = df_depts.copy()
+    if nc_only and 'nb_nc' in df_d.columns:
+        df_d = df_d[df_d['nb_nc'] > 0]
+    cols_show = [c for c in ['nom_departement','code_dept','nb_analyses','nb_nc','taux_conformite']
+                 if c in df_d.columns]
+    st.dataframe(
+        df_d[cols_show].rename(columns={
+            'nom_departement': 'Département', 'code_dept': 'Code',
+            'nb_analyses': 'Analyses', 'nb_nc': 'Non-conformes',
+            'taux_conformite': 'Conformité %',
+        }),
+        use_container_width=True, hide_index=True, height=320,
     )
-    st.plotly_chart(fig_gauge, use_container_width=True)
 
-with col_t:
-    if df_depts is not None and len(df_depts) > 0:
-        df_d = df_depts.copy()
-        if show_nc_only and 'nb_nc' in df_d.columns:
-            df_d = df_d[df_d['nb_nc'] > 0]
-        cols_show = [c for c in ['nom_departement','code_dept','nb_analyses','nb_nc','taux_conformite']
-                     if c in df_d.columns]
-        st.dataframe(
-            df_d[cols_show].rename(columns={
-                'nom_departement': 'Département',
-                'code_dept': 'Code',
-                'nb_analyses': 'Analyses',
-                'nb_nc': 'Non-conformes',
-                'taux_conformite': 'Conformité %',
-            }),
-            use_container_width=True, hide_index=True, height=310,
-        )
-
-# ── FOOTER ─────────────────────────────────────────────────────────────────────
-st.markdown('<hr class="section-divider" style="margin:2.5rem 0 1rem;">', unsafe_allow_html=True)
+# ═══════════════════════════════════════════════════════════════════════════════
+# PIED DE PAGE
+# ═══════════════════════════════════════════════════════════════════════════════
+st.markdown('<hr style="margin:2.5rem 0 1rem;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
 st.markdown(f"""
 <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:2rem;">
   <div>
-    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:#f0ece4;">AquaStat</div>
-    <div style="font-size:11px;color:#2c3040;margin-top:4px;line-height:1.6;">
-      Atlas vivant de la qualité de l'eau en France. Source : data.gouv.fr / ARS,<br>
-      traitement open-source via le pipeline Databricks water-quality-pipeline.
-    </div>
+    <span style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;
+                 font-weight:700;color:#d4e8e5;">AquaStat</span>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;
+              text-transform:uppercase;color:#1a3330;margin:6px 0 0;line-height:1.8;">
+      Source · data.gouv.fr / ARS — Contrôle sanitaire 2024<br>
+      Pipeline · Databricks Unity Catalog · water-quality-pipeline
+    </p>
   </div>
-  <div style="text-align:right;font-size:11px;color:#2c3040;line-height:1.6;">
-    Mariam Douamba · Simplon.co · 2026<br>
-    Données 2024 · Contrôle sanitaire ARS
+  <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;
+              letter-spacing:0.12em;text-transform:uppercase;color:#1a3330;line-height:1.8;">
+    Mariam Douamba<br>
+    Simplon.co · 2026
   </div>
 </div>
 """, unsafe_allow_html=True)
