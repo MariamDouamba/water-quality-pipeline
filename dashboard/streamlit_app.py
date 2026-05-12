@@ -114,14 +114,18 @@ def _get_databricks_creds():
             host      = st.secrets["databricks"]["host"]
             http_path = st.secrets["databricks"]["http_path"]
             token     = st.secrets["databricks"]["token"]
+            print(f"[CREDS] Source=st.secrets, host={host}, token={'OK' if token else 'VIDE'}")
             if token:
                 return host, http_path, token
-    except Exception:
-        pass
+        else:
+            print(f"[CREDS] st.secrets existe mais pas de clé 'databricks'. Clés disponibles : {list(st.secrets.keys())}")
+    except Exception as e:
+        print(f"[CREDS] st.secrets inaccessible : {e}")
     # 2. Variables d'environnement
     host      = os.getenv("DATABRICKS_HOST", "")
     http_path = os.getenv("DATABRICKS_HTTP_PATH", "")
     token     = os.getenv("DATABRICKS_TOKEN", "")
+    print(f"[CREDS] Source=env, host={'OK' if host else 'VIDE'}, token={'OK' if token else 'VIDE'}")
     return host, http_path, token
 
 @st.cache_data(ttl=3600, show_spinner=False)
