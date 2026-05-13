@@ -38,7 +38,7 @@ h1,h2,h3,h4 { font-family: 'Space Grotesk', sans-serif !important;
 /* Metrics */
 [data-testid="metric-container"]  { background: transparent; border: none; padding: 0 !important; }
 [data-testid="metric-container"] label
-  { color: #2a4a47 !important; font-size: 9px !important;
+  { color: #4a9990 !important; font-size: 9px !important;
     letter-spacing: 0.22em; text-transform: uppercase;
     font-family: 'JetBrains Mono', monospace !important; }
 [data-testid="metric-container"] [data-testid="stMetricValue"]
@@ -50,7 +50,7 @@ h1,h2,h3,h4 { font-family: 'Space Grotesk', sans-serif !important;
 
 /* Controls */
 .stSelectbox label, .stSlider label
-  { color: #2a4a47 !important; font-size: 9px !important;
+  { color: #4a9990 !important; font-size: 9px !important;
     letter-spacing: 0.15em; text-transform: uppercase; }
 hr { border-color: rgba(0,207,180,0.07) !important; }
 
@@ -96,7 +96,7 @@ hr { border-color: rgba(0,207,180,0.07) !important; }
 }
 .pcard-code {
   font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.18em;
-  text-transform:uppercase; color:#2a4a47; margin-bottom:8px;
+  text-transform:uppercase; color:#4a9990; margin-bottom:8px;
 }
 .pcard-name {
   font-family:'Space Grotesk',sans-serif; font-size:1rem; font-weight:600;
@@ -108,7 +108,7 @@ hr { border-color: rgba(0,207,180,0.07) !important; }
 .rank-head-tag {
   font-family:'JetBrains Mono',monospace; font-size:9px;
   letter-spacing:0.2em; text-transform:uppercase;
-  color:#2a4a47; margin-bottom:8px; display:block;
+  color:#4a9990; margin-bottom:8px; display:block;
 }
 .rank-head-val {
   font-family:'Space Grotesk',sans-serif; font-size:1.3rem; font-weight:700;
@@ -118,7 +118,7 @@ hr { border-color: rgba(0,207,180,0.07) !important; }
         border-bottom:1px solid rgba(0,207,180,0.05); gap:10px; }
 .rrow-num {
   font-family:'JetBrains Mono',monospace; font-size:10px;
-  color:#1a3330; width:22px; flex-shrink:0;
+  color:#3a7070; width:22px; flex-shrink:0;
 }
 .rrow-info { flex:1; min-width:0; }
 .rrow-name {
@@ -127,7 +127,7 @@ hr { border-color: rgba(0,207,180,0.07) !important; }
 }
 .rrow-dept {
   font-family:'JetBrains Mono',monospace; font-size:9px;
-  letter-spacing:0.1em; text-transform:uppercase; color:#1a3330; margin-top:2px;
+  letter-spacing:0.1em; text-transform:uppercase; color:#3a7070; margin-top:2px;
 }
 .rrow-bar-bg { width:64px; height:3px; background:rgba(0,207,180,0.08); border-radius:2px; }
 .rrow-bar    { height:3px; border-radius:2px; }
@@ -136,7 +136,7 @@ hr { border-color: rgba(0,207,180,0.07) !important; }
 
 /* Note */
 .aq-note {
-  font-size:11px; color:#1a3330; line-height:1.6; padding:0.8rem 0;
+  font-size:11px; color:#4d7a75; line-height:1.6; padding:0.8rem 0;
   border-top:1px solid rgba(0,207,180,0.06);
 }
 
@@ -164,8 +164,7 @@ _LAYOUT = dict(
 )
 _AXIS = dict(
     gridcolor='rgba(0,207,180,0.05)', linecolor='rgba(0,207,180,0.08)',
-    tickfont=dict(color='#2a4a47', size=10,
-                  family='JetBrains Mono'),
+    tickfont=dict(color='#4a9990', size=10, family='JetBrains Mono'),
     zerolinecolor='rgba(0,207,180,0.05)',
 )
 
@@ -454,7 +453,7 @@ st.markdown(f"""
 <div style="padding:2rem 0 0.5rem;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
     <span style="font-family:'JetBrains Mono',monospace;font-size:9px;
-                 letter-spacing:0.22em;text-transform:uppercase;color:#2a4a47;">
+                 letter-spacing:0.22em;text-transform:uppercase;color:#4a9990;">
       AQUASTAT — OBSERVATOIRE DE LA QUALITÉ DE L'EAU EN FRANCE · 2024
     </span>
     {badge}
@@ -525,14 +524,15 @@ de distribution français. Calculés à partir des taux moyens de conformité d�
         value=taux,
         number={'suffix': ' %', 'font': {'size': 28, 'color': '#00cfb4',
                 'family': 'JetBrains Mono'}},
-        title={'text': "Taux national 2024", 'font': {'color': '#2a4a47', 'size': 11,
+        title={'text': "Taux national 2024", 'font': {'color': '#4a9990', 'size': 11,
                'family': 'JetBrains Mono'}},
         gauge={
-            'axis': {'range': [80, 100], 'tickfont': {'color': '#1a3330', 'size': 9,
+            'axis': {'range': [70, 100], 'tickfont': {'color': '#4a9990', 'size': 9,
                      'family': 'JetBrains Mono'}},
             'bar': {'color': '#00cfb4', 'thickness': 0.22},
             'steps': [
-                {'range': [80, 88], 'color': 'rgba(200,53,48,0.28)'},
+                {'range': [70, 80], 'color': 'rgba(200,53,48,0.35)'},
+                {'range': [80, 88], 'color': 'rgba(200,53,48,0.22)'},
                 {'range': [88, 95], 'color': 'rgba(200,133,32,0.22)'},
                 {'range': [95,100], 'color': 'rgba(0,145,122,0.18)'},
             ],
@@ -691,7 +691,7 @@ with c1:
         x=df_temp['mois'], y=df_temp['nb_prelevements'],
         marker=dict(
             color=df_temp['nb_prelevements'].tolist(),
-            colorscale=[[0,'#0d3d38'],[1,'#00cfb4']],
+            colorscale=[[0,'#1a6b5e'],[1,'#00cfb4']],
             showscale=False,
         ),
         hovertemplate='<b>%{x}</b> · %{y:,.0f} prélèvements<extra></extra>',
@@ -706,7 +706,7 @@ with c2:
         orientation='h',
         marker=dict(
             color=df_p['nb_nc'].tolist(),
-            colorscale=[[0,'#0d3d38'],[0.5,'#3d2d0d'],[1,'#3d0d0d']],
+            colorscale=[[0,'#1a6b5e'],[0.5,'#c88520'],[1,'#c83030']],
             showscale=False,
         ),
         hovertemplate='<b>%{y}</b> · %{x:,.0f} NC<extra></extra>',
@@ -740,13 +740,13 @@ st.markdown(f"""
     <span style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;
                  font-weight:700;color:#d4e8e5;">AquaStat</span>
     <p style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;
-              text-transform:uppercase;color:#1a3330;margin:6px 0 0;line-height:1.8;">
+              text-transform:uppercase;color:#3a7070;margin:6px 0 0;line-height:1.8;">
       Source · data.gouv.fr / ARS — Contrôle sanitaire 2024<br>
       Pipeline · Databricks Unity Catalog · water-quality-pipeline
     </p>
   </div>
   <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;
-              letter-spacing:0.12em;text-transform:uppercase;color:#1a3330;line-height:1.8;">
+              letter-spacing:0.12em;text-transform:uppercase;color:#3a7070;line-height:1.8;">
     Mariam Douamba<br>
     Simplon.co · 2026
   </div>
