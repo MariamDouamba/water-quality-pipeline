@@ -1,3 +1,9 @@
+## [1.6.2](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.6.1...v1.6.2) (2026-05-13)
+
+### Bug Fixes
+
+* **dashboard:** fix all remaining low-contrast colors and gauge range ([4348b66](https://github.com/MariamDouamba/water-quality-pipeline/commit/4348b66afff11b2eda36d0201ce60701c1711815)), closes [#2a4a47](https://github.com/MariamDouamba/water-quality-pipeline/issues/2a4a47) [#1a3330](https://github.com/MariamDouamba/water-quality-pipeline/issues/1a3330) [#4a9990](https://github.com/MariamDouamba/water-quality-pipeline/issues/4a9990) [#3a7070](https://github.com/MariamDouamba/water-quality-pipeline/issues/3a7070) [#00cfb4](https://github.com/MariamDouamba/water-quality-pipeline/issues/00cfb4) [#4a9990](https://github.com/MariamDouamba/water-quality-pipeline/issues/4a9990)
+
 ## [1.6.1](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.6.0...v1.6.1) (2026-05-13)
 
 ### Bug Fixes
