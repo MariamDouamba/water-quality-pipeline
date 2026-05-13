@@ -1,3 +1,9 @@
+## [1.6.3](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.6.2...v1.6.3) (2026-05-13)
+
+### Bug Fixes
+
+* **dashboard:** correct taux_conformite — exclude Non evalue from denominator ([921844c](https://github.com/MariamDouamba/water-quality-pipeline/commit/921844c48c91c9133df4189ba093283fdb2a0f63))
+
 ## [1.6.2](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.6.1...v1.6.2) (2026-05-13)
 
 ### Bug Fixes
