@@ -58,7 +58,7 @@ hr { border-color: rgba(0,207,180,0.07) !important; }
 
 .aq-tag {
   font-family:'JetBrains Mono',monospace; font-size:9px;
-  letter-spacing:0.18em; text-transform:uppercase; color:#2a4a47;
+  letter-spacing:0.18em; text-transform:uppercase; color:#4a9990;
   margin-bottom:6px; display:block;
 }
 .aq-title {
@@ -78,14 +78,14 @@ hr { border-color: rgba(0,207,180,0.07) !important; }
              font-weight:600; color:#00cfb4; line-height:1; }
 .kpi-label { font-family:'JetBrains Mono',monospace; font-size:9px;
              letter-spacing:0.2em; text-transform:uppercase;
-             color:#2a4a47; margin-top:5px; }
+             color:#4a9990; margin-top:5px; }
 
 /* Tier legend */
 .tier-row { display:flex; align-items:center; gap:10px;
-            padding:6px 0; border-bottom:1px solid rgba(0,207,180,0.05); }
-.tier-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
-.tier-lbl { font-size:12px; color:#7ab8b0; flex:1; }
-.tier-rng { font-family:'JetBrains Mono',monospace; font-size:10px; color:#2a4a47; }
+            padding:7px 0; border-bottom:1px solid rgba(0,207,180,0.06); }
+.tier-dot { width:14px; height:14px; border-radius:3px; flex-shrink:0; }
+.tier-lbl { font-size:12px; color:#8ecec8; flex:1; font-weight:500; }
+.tier-rng { font-family:'JetBrains Mono',monospace; font-size:10px; color:#4a9990; }
 .tier-cnt { font-family:'JetBrains Mono',monospace; font-size:10px;
             color:#00cfb4; width:60px; text-align:right; }
 
@@ -179,13 +179,13 @@ def styled(fig, h=340):
 # Nommage propre AquaStat (différent des classifications standard ARS)
 TIER_ORDER  = ["Optimal (≥ 95 %)", "Satisfaisant (88–95 %)", "Insuffisant (80–88 %)", "Critique (< 80 %)"]
 TIER_COLORS = {
-    "Optimal (≥ 95 %)":      "#0d3d38",
-    "Satisfaisant (88–95 %)": "#0d2f3d",
-    "Insuffisant (80–88 %)":  "#3d2d0d",
-    "Critique (< 80 %)":      "#3d0d0d",
+    "Optimal (≥ 95 %)":      "#00917a",
+    "Satisfaisant (88–95 %)": "#1e7ab0",
+    "Insuffisant (80–88 %)":  "#c88520",
+    "Critique (< 80 %)":      "#c83030",
 }
-TIER_HEX    = ["#0d3d38", "#0d2f3d", "#3d2d0d", "#3d0d0d"]
-TIER_BORDER = ["#00cfb4", "#1e7abf", "#e8b86d", "#e05c5c"]
+TIER_HEX    = ["#00917a", "#1e7ab0", "#c88520", "#c83030"]
+TIER_BORDER = ["#00cfb4", "#4ab0e8", "#e8b86d", "#e05c5c"]
 
 def conformite_tier(tc):
     tc = float(tc) if tc is not None else 0
@@ -532,9 +532,9 @@ de distribution français. Calculés à partir des taux moyens de conformité d�
                      'family': 'JetBrains Mono'}},
             'bar': {'color': '#00cfb4', 'thickness': 0.22},
             'steps': [
-                {'range': [80, 88], 'color': 'rgba(224,92,92,0.12)'},
-                {'range': [88, 95], 'color': 'rgba(232,184,109,0.1)'},
-                {'range': [95,100], 'color': 'rgba(0,207,180,0.08)'},
+                {'range': [80, 88], 'color': 'rgba(200,53,48,0.28)'},
+                {'range': [88, 95], 'color': 'rgba(200,133,32,0.22)'},
+                {'range': [95,100], 'color': 'rgba(0,145,122,0.18)'},
             ],
             'threshold': {'line': {'color': '#e8b86d', 'width': 2},
                           'thickness': 0.8, 'value': 95},
@@ -551,40 +551,49 @@ de distribution français. Calculés à partir des taux moyens de conformité d�
 with col_r:
     if geojson and df_depts is not None and 'taux_conformite' in df_depts.columns:
         df_map = df_depts.copy()
-        df_map['code_geo']       = df_map['code_dept'].apply(normalize_dept_code)
+        df_map['code_geo']        = df_map['code_dept'].apply(normalize_dept_code)
         df_map['taux_conformite'] = pd.to_numeric(df_map['taux_conformite'], errors='coerce')
-        df_map['niveau']         = df_map['taux_conformite'].apply(conformite_tier)
-        df_map['niveau']         = pd.Categorical(df_map['niveau'],
-                                                   categories=TIER_ORDER, ordered=True)
+
+        # Plage adaptative : montre toujours au moins 10 pts de variation
+        tc_vals   = df_map['taux_conformite'].dropna()
+        tc_floor  = max(0.0, float(tc_vals.min()) - 3.0)
+        range_low = min(tc_floor, 90.0)  # jamais au-dessus de 90 pour garder les seuils visibles
 
         fig_map = px.choropleth(
             df_map,
             geojson=geojson,
             locations='code_geo',
             featureidkey='properties.code',
-            color='niveau',
-            color_discrete_map=TIER_COLORS,
-            category_orders={'niveau': TIER_ORDER},
+            color='taux_conformite',
+            color_continuous_scale=[
+                [0.00, "#c83030"],   # rouge   → Critique
+                [0.30, "#c88520"],   # ambre   → Insuffisant
+                [0.55, "#1e7ab0"],   # bleu    → Satisfaisant
+                [1.00, "#00cfb4"],   # teal    → Optimal
+            ],
+            range_color=[range_low, 100.0],
             hover_name='nom_departement',
             hover_data={
-                'taux_conformite': ':.1f',
+                'taux_conformite': ':.2f',
                 'nb_analyses': ':,',
-                'niveau': False,
                 'code_geo': False,
             },
             labels={'taux_conformite': 'Conformité %', 'nb_analyses': 'Analyses'},
         )
         fig_map.update_geos(fitbounds="locations", visible=False)
+        fig_map.update_traces(
+            marker_line_color='rgba(5,15,15,0.7)',
+            marker_line_width=0.4,
+        )
         fig_map.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             geo=dict(bgcolor='rgba(0,0,0,0)'),
-            legend=dict(
-                title=None,
-                font=dict(color='#4d7a75', size=10, family='JetBrains Mono'),
-                bgcolor='rgba(0,0,0,0)',
-                orientation='h',
-                yanchor='bottom', y=-0.1,
-                xanchor='left',   x=0,
+            coloraxis_colorbar=dict(
+                title=dict(text="Conformité %",
+                           font=dict(color='#4a9990', size=10, family='JetBrains Mono')),
+                tickfont=dict(color='#4a9990', size=9, family='JetBrains Mono'),
+                thickness=10, len=0.55,
+                x=1.01,
             ),
             margin=dict(t=10, b=20, l=0, r=0),
             height=480,
@@ -677,7 +686,7 @@ st.markdown("""
 c1, c2 = st.columns(2, gap="large")
 
 with c1:
-    st.markdown('<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#2a4a47;">Prélèvements par mois</span>', unsafe_allow_html=True)
+    st.markdown('<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#4a9990;">Prélèvements par mois</span>', unsafe_allow_html=True)
     fig_t = go.Figure(go.Bar(
         x=df_temp['mois'], y=df_temp['nb_prelevements'],
         marker=dict(
@@ -690,7 +699,7 @@ with c1:
     st.plotly_chart(styled(fig_t, 280), use_container_width=True)
 
 with c2:
-    st.markdown(f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#2a4a47;">Top {top_n} indicateurs non conformes</span>', unsafe_allow_html=True)
+    st.markdown(f'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#4a9990;">Top {top_n} indicateurs non conformes</span>', unsafe_allow_html=True)
     df_p = df_params.head(top_n).sort_values('nb_nc')
     fig_p = go.Figure(go.Bar(
         x=df_p['nb_nc'], y=df_p['nom_parametre'],
@@ -706,7 +715,7 @@ with c2:
 
 # Tableau départements
 if df_depts is not None:
-    st.markdown('<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#2a4a47;display:block;margin-bottom:8px;">Données par département</span>', unsafe_allow_html=True)
+    st.markdown('<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#4a9990;display:block;margin-bottom:8px;">Données par département</span>', unsafe_allow_html=True)
     df_d = df_depts.copy()
     if nc_only and 'nb_nc' in df_d.columns:
         df_d = df_d[df_d['nb_nc'] > 0]
