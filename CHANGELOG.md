@@ -1,3 +1,9 @@
+## [1.6.1](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.6.0...v1.6.1) (2026-05-13)
+
+### Bug Fixes
+
+* **dashboard:** contrast & map readability ([00dd6d8](https://github.com/MariamDouamba/water-quality-pipeline/commit/00dd6d84ab18f82e6a2258505db6d398b39e9acf)), closes [#2a4a47](https://github.com/MariamDouamba/water-quality-pipeline/issues/2a4a47) [#4a9990](https://github.com/MariamDouamba/water-quality-pipeline/issues/4a9990)
+
 ## [1.6.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.5.0...v1.6.0) (2026-05-12)
 
 ### Features
