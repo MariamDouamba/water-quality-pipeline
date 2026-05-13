@@ -304,7 +304,11 @@ def get_all_data():
     df_kpis, _ = load_db("""
         SELECT COUNT(*) AS total_analyses,
                SUM(CASE WHEN est_conforme = 'Non conforme' THEN 1 ELSE 0 END) AS total_nc,
-               ROUND(SUM(CASE WHEN est_conforme = 'Conforme' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) AS taux_conformite
+               ROUND(
+                 SUM(CASE WHEN est_conforme = 'Conforme' THEN 1 ELSE 0 END) * 100.0 /
+                 NULLIF(SUM(CASE WHEN est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END), 0),
+                 2
+               ) AS taux_conformite
         FROM gold_fact_analyses
     """)
 
@@ -341,13 +345,19 @@ def get_all_data():
 
     df_top, _ = load_db("""
         SELECT f.commune AS nom_commune, f.departement_code AS code_dept,
-               d.nom_departement, COUNT(*) AS nb_analyses,
-               ROUND(SUM(CASE WHEN f.est_conforme='Conforme' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) AS taux_conformite
+               d.nom_departement,
+               SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END) AS nb_analyses,
+               ROUND(
+                 SUM(CASE WHEN f.est_conforme='Conforme' THEN 1 ELSE 0 END)*100.0 /
+                 NULLIF(SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END),0),
+                 1
+               ) AS taux_conformite
         FROM gold_fact_analyses f
         LEFT JOIN gold_dim_departement d ON f.departement_code=d.code_departement
         WHERE f.commune IS NOT NULL
+          AND f.est_conforme IN ('Conforme','Non conforme')
         GROUP BY f.commune,f.departement_code,d.nom_departement
-        HAVING COUNT(*) >= 200
+        HAVING SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END) >= 200
         ORDER BY taux_conformite DESC, nb_analyses DESC LIMIT 10
     """)
     if df_top is None:
@@ -355,13 +365,19 @@ def get_all_data():
 
     df_bottom, _ = load_db("""
         SELECT f.commune AS nom_commune, f.departement_code AS code_dept,
-               d.nom_departement, COUNT(*) AS nb_analyses,
-               ROUND(SUM(CASE WHEN f.est_conforme='Conforme' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) AS taux_conformite
+               d.nom_departement,
+               SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END) AS nb_analyses,
+               ROUND(
+                 SUM(CASE WHEN f.est_conforme='Conforme' THEN 1 ELSE 0 END)*100.0 /
+                 NULLIF(SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END),0),
+                 1
+               ) AS taux_conformite
         FROM gold_fact_analyses f
         LEFT JOIN gold_dim_departement d ON f.departement_code=d.code_departement
         WHERE f.commune IS NOT NULL
+          AND f.est_conforme IN ('Conforme','Non conforme')
         GROUP BY f.commune,f.departement_code,d.nom_departement
-        HAVING COUNT(*) >= 200
+        HAVING SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END) >= 200
         ORDER BY taux_conformite ASC LIMIT 10
     """)
     if df_bottom is None:
@@ -527,17 +543,16 @@ de distribution français. Calculés à partir des taux moyens de conformité d�
         title={'text': "Taux national 2024", 'font': {'color': '#4a9990', 'size': 11,
                'family': 'JetBrains Mono'}},
         gauge={
-            'axis': {'range': [70, 100], 'tickfont': {'color': '#4a9990', 'size': 9,
+            'axis': {'range': [95, 100], 'tickfont': {'color': '#4a9990', 'size': 9,
                      'family': 'JetBrains Mono'}},
             'bar': {'color': '#00cfb4', 'thickness': 0.22},
             'steps': [
-                {'range': [70, 80], 'color': 'rgba(200,53,48,0.35)'},
-                {'range': [80, 88], 'color': 'rgba(200,53,48,0.22)'},
-                {'range': [88, 95], 'color': 'rgba(200,133,32,0.22)'},
-                {'range': [95,100], 'color': 'rgba(0,145,122,0.18)'},
+                {'range': [95.0, 97.5], 'color': 'rgba(200,133,32,0.20)'},
+                {'range': [97.5, 99.0], 'color': 'rgba(0,145,122,0.15)'},
+                {'range': [99.0, 100],  'color': 'rgba(0,207,180,0.12)'},
             ],
             'threshold': {'line': {'color': '#e8b86d', 'width': 2},
-                          'thickness': 0.8, 'value': 95},
+                          'thickness': 0.8, 'value': 99},
         }
     ))
     fig_gauge.update_layout(
