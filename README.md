@@ -1,6 +1,21 @@
 # Water Quality Pipeline
 
-Pipeline de données pour l'analyse de la qualité de l'eau distribuée en France.
+Pipeline de données pour l'analyse de la qualité de l'eau distribuée en France — de l'ingestion brute jusqu'au dashboard interactif.
+
+## Dashboard AquaStat
+
+Interface de visualisation déployée sur Streamlit Cloud, connectée en temps réel à Databricks.
+
+**Fonctionnalités :**
+
+- 6 KPIs en temps réel : taux de conformité, non-conformités, analyses, prélèvements, communes, paramètre le plus défaillant
+- Carte choroplèthe interactive par département (filtre non-conformités uniquement)
+- Jauge de conformité nationale avec zones de couleur par tier (Optimal / Satisfaisant / Insuffisant / Critique)
+- Analyse approfondie des communes : histogramme de distribution + scatter plot volume vs conformité + recherche par nom
+- Tendance mensuelle avec ligne de régression sur axe secondaire
+- Filtre par année et filtre non-conformités
+- Export CSV des données filtrées
+- Méthodologie & sources de données intégrées
 
 ## Architecture du pipeline
 
@@ -9,11 +24,15 @@ flowchart LR
     A[data.gouv.fr\nAPI + ZIP] -->|3 fichiers| B[Bronze\n3 tables brutes]
     B -->|Nettoyage\nEnrichissement\nJointure| C[Silver\n1 table enrichie]
     C -->|Agrégation\nModélisation| D[Gold\nModèle en étoile\n6 dimensions]
+    D -->|API REST| E[FastAPI\n/api]
+    D -->|Dashboard| F[Streamlit\nAquaStat]
 
     style A fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
     style B fill:#faece7,stroke:#993c1d,color:#4a1b0c
     style C fill:#e1f5ee,stroke:#0f6e56,color:#04342c
     style D fill:#eeedfe,stroke:#534ab7,color:#26215c
+    style E fill:#e6f1fb,stroke:#185fa5,color:#042c53
+    style F fill:#e6f1fb,stroke:#185fa5,color:#042c53
 ```
 
 ## Modèle en étoile (Gold)
@@ -116,18 +135,28 @@ Source : [data.gouv.fr](https://www.data.gouv.fr/fr/datasets/resultats-du-contro
 
 ## Stack technique
 
-- **Cloud** : Azure / Databricks (Serverless)
-- **Traitement** : PySpark
-- **Stockage** : Delta Lake (architecture médaillon)
-- **CI/CD** : GitHub Actions
-- **Qualité** : Great Expectations
+| Couche | Technologie |
+|--------|-------------|
+| Cloud & traitement | Azure / Databricks (Serverless), PySpark |
+| Stockage | Delta Lake (architecture médaillon Bronze → Silver → Gold) |
+| API | FastAPI + Uvicorn |
+| Dashboard | Streamlit Cloud |
+| CI/CD | GitHub Actions + semantic-release |
+| Qualité | Great Expectations |
 
 ## Structure du projet
 
-    water-quality-pipelines/
+    water-quality-pipeline/
     ├── .github/
     │   └── workflows/
     │       └── ci.yml
+    ├── api/
+    │   ├── main.py
+    │   ├── requirements.txt
+    │   └── README.md
+    ├── dashboard/
+    │   ├── streamlit_app.py
+    │   └── requirements.txt
     ├── notebooks/
     │   ├── 01_DLT_Ingestion_Qualite_Eau.py
     │   ├── 02_Silver_Transformation.py
@@ -157,9 +186,10 @@ Source : [data.gouv.fr](https://www.data.gouv.fr/fr/datasets/resultats-du-contro
 
 ## Résultats clés
 
-- 28 140 non-conformités détectées sur 12.6M analyses
+- **99,72 %** de taux de conformité national (2024)
+- 28 140 non-conformités détectées sur 12,6M analyses
 - 17 543 prélèvements avec au moins une non-conformité
-- Données couvrant toute l'année 2024 (2 jan - 31 déc)
+- Données couvrant toute l'année 2024 (2 jan – 31 déc)
 - 34 811 communes et 101 départements analysés
 - 4 niveaux de danger : Sanitaire critique, Sanitaire, Organoleptique, Surveillance
 
@@ -174,4 +204,4 @@ Source : [data.gouv.fr](https://www.data.gouv.fr/fr/datasets/resultats-du-contro
 
 ## Auteur
 
-Projet réalisé dans le cadre d'une formation Data Engineering.
+Mariam Douamba — Projet réalisé dans le cadre d'une formation Data Engineering chez Simplon.co (2026).
