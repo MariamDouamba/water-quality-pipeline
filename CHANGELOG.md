@@ -1,3 +1,9 @@
+## [1.9.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.8.0...v1.9.0) (2026-05-14)
+
+### Features
+
+* **dashboard:** 10 améliorations — palette eau, UX, données ([8b22978](https://github.com/MariamDouamba/water-quality-pipeline/commit/8b22978ab3c045dbf0d96a80b776021dfccfc86d))
+
 ## [1.8.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.7.0...v1.8.0) (2026-05-14)
 
 ### Features
