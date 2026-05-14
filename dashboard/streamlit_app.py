@@ -24,108 +24,108 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=JetBrains+Mono:wght@300;400;600&family=DM+Sans:ital,wght@0,300;0,400;1,300&display=swap');
 
 html, body, [class*="css"]      { font-family: 'DM Sans', sans-serif; }
-.stApp                          { background: #050f0f; }
-[data-testid="stSidebar"]       { background: #040c0c !important;
-                                  border-right: 1px solid rgba(0,207,180,0.08); }
+.stApp                          { background: #040c18; }
+[data-testid="stSidebar"]       { background: #03090f !important;
+                                  border-right: 1px solid rgba(56,178,248,0.08); }
 h1,h2,h3,h4 { font-family: 'Space Grotesk', sans-serif !important;
-               color: #d4e8e5 !important; font-weight: 600 !important; }
+               color: #d4e4f0 !important; font-weight: 600 !important; }
 
 [data-testid="metric-container"]  { background: transparent; border: none; padding: 0 !important; }
 [data-testid="metric-container"] label
-  { color: #4a9990 !important; font-size: 9px !important;
+  { color: #3a7aaa !important; font-size: 9px !important;
     letter-spacing: 0.22em; text-transform: uppercase;
     font-family: 'JetBrains Mono', monospace !important; }
 [data-testid="metric-container"] [data-testid="stMetricValue"]
-  { color: #00cfb4 !important; font-family: 'JetBrains Mono', monospace !important;
+  { color: #38b2f8 !important; font-family: 'JetBrains Mono', monospace !important;
     font-size: 2rem !important; font-weight: 600 !important; }
 [data-testid="metric-container"] [data-testid="stMetricDelta"] { color: #4fbf8e !important; }
 
 .stSelectbox label, .stSlider label
-  { color: #4a9990 !important; font-size: 9px !important;
+  { color: #3a7aaa !important; font-size: 9px !important;
     letter-spacing: 0.15em; text-transform: uppercase; }
-hr { border-color: rgba(0,207,180,0.07) !important; }
+hr { border-color: rgba(56,178,248,0.07) !important; }
 
 .aq-tag   { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.18em;
-            text-transform:uppercase; color:#4a9990; margin-bottom:6px; display:block; }
+            text-transform:uppercase; color:#3a7aaa; margin-bottom:6px; display:block; }
 .aq-title { font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700;
-            color:#d4e8e5; margin:0 0 6px; line-height:1.1; }
-.aq-title-accent { color:#00cfb4; }
+            color:#d4e4f0; margin:0 0 6px; line-height:1.1; }
+.aq-title-accent { color:#38b2f8; }
 .aq-title-amber  { color:#e8b86d; }
-.aq-body  { color:#4d7a75; font-size:13px; line-height:1.7; max-width:420px; margin-top:8px; }
+.aq-body  { color:#3d6a8a; font-size:13px; line-height:1.7; max-width:420px; margin-top:8px; }
 
 .kpi-block { padding:0; }
 .kpi-val   { font-family:'JetBrains Mono',monospace; font-size:2.4rem;
-             font-weight:600; color:#00cfb4; line-height:1; }
+             font-weight:600; color:#38b2f8; line-height:1; }
 .kpi-val-alert { color:#e05c5c !important; }
 .kpi-label { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.2em;
-             text-transform:uppercase; color:#4a9990; margin-top:5px; }
+             text-transform:uppercase; color:#3a7aaa; margin-top:5px; }
 
 .tier-row { display:flex; align-items:center; gap:10px; padding:7px 0;
-            border-bottom:1px solid rgba(0,207,180,0.06); }
+            border-bottom:1px solid rgba(56,178,248,0.06); }
 .tier-dot { width:14px; height:14px; border-radius:3px; flex-shrink:0; }
-.tier-lbl { font-size:12px; color:#8ecec8; flex:1; font-weight:500; }
-.tier-rng { font-family:'JetBrains Mono',monospace; font-size:10px; color:#4a9990; }
+.tier-lbl { font-size:12px; color:#8ec8e8; flex:1; font-weight:500; }
+.tier-rng { font-family:'JetBrains Mono',monospace; font-size:10px; color:#3a7aaa; }
 .tier-cnt { font-family:'JetBrains Mono',monospace; font-size:10px;
-            color:#00cfb4; width:60px; text-align:right; }
+            color:#38b2f8; width:60px; text-align:right; }
 
 /* Panneau de détail département */
-.dept-panel { background:#0a1a1a; border:1px solid rgba(0,207,180,0.1);
+.dept-panel { background:#0a1420; border:1px solid rgba(56,178,248,0.1);
               border-radius:12px; padding:1.2rem; height:100%; }
 .dept-name  { font-family:'Space Grotesk',sans-serif; font-size:1.5rem; font-weight:700;
-              color:#d4e8e5; margin:6px 0 4px; line-height:1.1; }
+              color:#d4e4f0; margin:6px 0 4px; line-height:1.1; }
 .dept-tier  { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.15em;
               text-transform:uppercase; padding:2px 8px; border-radius:3px; display:inline-block; }
 .dept-tc    { font-family:'JetBrains Mono',monospace; font-size:2rem; font-weight:600;
-              color:#00cfb4; margin:10px 0 0; line-height:1; }
+              color:#38b2f8; margin:10px 0 0; line-height:1; }
 .dept-stat-row { display:flex; gap:16px; margin-top:10px; padding-top:10px;
-                 border-top:1px solid rgba(0,207,180,0.06); }
+                 border-top:1px solid rgba(56,178,248,0.06); }
 .dept-stat     { flex:1; }
 .dept-stat-val { font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:600;
-                 color:#d4e8e5; }
+                 color:#d4e4f0; }
 .dept-stat-lbl { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.15em;
-                 text-transform:uppercase; color:#4a9990; margin-top:2px; }
-.dept-section  { margin-top:14px; padding-top:10px; border-top:1px solid rgba(0,207,180,0.06); }
+                 text-transform:uppercase; color:#3a7aaa; margin-top:2px; }
+.dept-section  { margin-top:14px; padding-top:10px; border-top:1px solid rgba(56,178,248,0.06); }
 .dept-section-title { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.18em;
-                      text-transform:uppercase; color:#4a9990; margin-bottom:8px; display:block; }
+                      text-transform:uppercase; color:#3a7aaa; margin-bottom:8px; display:block; }
 .dept-param-row { display:flex; justify-content:space-between; padding:5px 0;
-                  border-bottom:1px solid rgba(0,207,180,0.04); }
-.dept-param-name { font-size:11px; color:#8ecec8; }
+                  border-bottom:1px solid rgba(56,178,248,0.04); }
+.dept-param-name { font-size:11px; color:#8ec8e8; }
 .dept-param-nc   { font-family:'JetBrains Mono',monospace; font-size:11px; color:#e05c5c; }
 .dept-commune-row { display:flex; align-items:center; gap:8px; padding:5px 0;
-                    border-bottom:1px solid rgba(0,207,180,0.04); }
-.dept-commune-name { font-size:11px; color:#8ecec8; flex:1; }
+                    border-bottom:1px solid rgba(56,178,248,0.04); }
+.dept-commune-name { font-size:11px; color:#8ec8e8; flex:1; }
 .dept-commune-pct  { font-family:'JetBrains Mono',monospace; font-size:11px; color:#e8b86d; }
-.dept-empty { color:#3a7070; font-size:12px; font-style:italic; text-align:center;
+.dept-empty { color:#2a5a8a; font-size:12px; font-style:italic; text-align:center;
               padding:2rem 0.5rem; line-height:1.6; }
 
-.pcard { background:#0d1f1f; border:1px solid rgba(0,207,180,0.08);
+.pcard { background:#0d1828; border:1px solid rgba(56,178,248,0.08);
          border-radius:10px; padding:1.1rem; min-height:128px; }
 .pcard-code { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.18em;
-              text-transform:uppercase; color:#4a9990; margin-bottom:8px; }
+              text-transform:uppercase; color:#3a7aaa; margin-bottom:8px; }
 .pcard-name { font-family:'Space Grotesk',sans-serif; font-size:1rem; font-weight:600;
-              color:#d4e8e5; margin-bottom:6px; }
-.pcard-desc { font-size:11px; color:#4d7a75; line-height:1.55; }
+              color:#d4e4f0; margin-bottom:6px; }
+.pcard-desc { font-size:11px; color:#3d6a8a; line-height:1.55; }
 
 .rank-head-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.2em;
-                 text-transform:uppercase; color:#4a9990; margin-bottom:8px; display:block; }
+                 text-transform:uppercase; color:#3a7aaa; margin-bottom:8px; display:block; }
 .rank-head-val { font-family:'Space Grotesk',sans-serif; font-size:1.3rem; font-weight:700;
-                 color:#d4e8e5; margin-bottom:14px; display:block; }
+                 color:#d4e4f0; margin-bottom:14px; display:block; }
 .rrow { display:flex; align-items:center; padding:8px 0;
-        border-bottom:1px solid rgba(0,207,180,0.05); gap:10px; }
+        border-bottom:1px solid rgba(56,178,248,0.05); gap:10px; }
 .rrow-num  { font-family:'JetBrains Mono',monospace; font-size:10px;
-             color:#3a7070; width:22px; flex-shrink:0; }
+             color:#2a5a8a; width:22px; flex-shrink:0; }
 .rrow-info { flex:1; min-width:0; }
 .rrow-name { font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:600;
-             color:#b8d4d1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+             color:#b8d0e8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rrow-dept { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.1em;
-             text-transform:uppercase; color:#3a7070; margin-top:2px; }
-.rrow-bar-bg { width:64px; height:3px; background:rgba(0,207,180,0.08); border-radius:2px; }
+             text-transform:uppercase; color:#2a5a8a; margin-top:2px; }
+.rrow-bar-bg { width:64px; height:3px; background:rgba(56,178,248,0.08); border-radius:2px; }
 .rrow-bar    { height:3px; border-radius:2px; }
 .rrow-pct    { font-family:'JetBrains Mono',monospace; font-size:11px;
                width:46px; text-align:right; flex-shrink:0; }
 
-.aq-note { font-size:11px; color:#4d7a75; line-height:1.6; padding:0.8rem 0;
-           border-top:1px solid rgba(0,207,180,0.06); }
+.aq-note { font-size:11px; color:#3d6a8a; line-height:1.6; padding:0.8rem 0;
+           border-top:1px solid rgba(56,178,248,0.06); }
 
 .badge-live { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.15em;
               text-transform:uppercase; background:rgba(79,191,142,0.1);
@@ -141,13 +141,13 @@ hr { border-color: rgba(0,207,180,0.07) !important; }
 # ── Plotly theme ───────────────────────────────────────────────────────────────
 _LAYOUT = dict(
     paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(family='DM Sans', color='#4d7a75', size=11),
+    font=dict(family='DM Sans', color='#3d6a8a', size=11),
     margin=dict(t=30, b=40, l=50, r=20),
 )
 _AXIS = dict(
-    gridcolor='rgba(0,207,180,0.05)', linecolor='rgba(0,207,180,0.08)',
-    tickfont=dict(color='#4a9990', size=10, family='JetBrains Mono'),
-    zerolinecolor='rgba(0,207,180,0.05)',
+    gridcolor='rgba(56,178,248,0.05)', linecolor='rgba(56,178,248,0.08)',
+    tickfont=dict(color='#3a7aaa', size=10, family='JetBrains Mono'),
+    zerolinecolor='rgba(56,178,248,0.05)',
 )
 
 def styled(fig, h=340):
@@ -158,11 +158,11 @@ def styled(fig, h=340):
 
 # ── Tiers ──────────────────────────────────────────────────────────────────────
 TIER_ORDER  = ["Optimal (≥ 95 %)", "Satisfaisant (88–95 %)", "Insuffisant (80–88 %)", "Critique (< 80 %)"]
-TIER_COLORS = {"Optimal (≥ 95 %)":"#00917a","Satisfaisant (88–95 %)":"#1e7ab0",
+TIER_COLORS = {"Optimal (≥ 95 %)":"#1565c0","Satisfaisant (88–95 %)":"#5b8dd9",
                "Insuffisant (80–88 %)":"#c88520","Critique (< 80 %)":"#c83030"}
-TIER_HEX    = ["#00917a","#1e7ab0","#c88520","#c83030"]
-TIER_BORDER = ["#00cfb4","#4ab0e8","#e8b86d","#e05c5c"]
-TIER_BG     = ["rgba(0,145,122,0.15)","rgba(30,122,176,0.15)",
+TIER_HEX    = ["#1565c0","#5b8dd9","#c88520","#c83030"]
+TIER_BORDER = ["#38b2f8","#7ab8f5","#e8b86d","#e05c5c"]
+TIER_BG     = ["rgba(21,101,192,0.15)","rgba(91,141,217,0.15)",
                "rgba(200,133,32,0.15)","rgba(200,48,48,0.15)"]
 
 def conformite_tier(tc):
@@ -418,8 +418,8 @@ def _indicator_card(info):
 </div>"""
 
 def _ranking_row(rank, nom, code, dept, pct, good):
-    bar_color = "#00cfb4" if good else "#e05c5c"
-    pct_color = "#00cfb4" if good else "#e05c5c"
+    bar_color = "#38b2f8" if good else "#e05c5c"
+    pct_color = "#38b2f8" if good else "#e05c5c"
     bar_w     = min(100, max(1, float(pct) if pct is not None else 0))
     dept_str  = f"{code} — {str(dept).upper()}" if dept else code
     return f"""<div class="rrow">
@@ -452,7 +452,7 @@ def _dept_panel(dept_row, df_p, df_c):
   <span class="dept-param-nc">{int(row['nb_nc']):,} NC</span>
 </div>"""
     else:
-        params_html = '<p style="color:#3a7070;font-size:11px;font-style:italic;">Aucune non-conformité détectée</p>'
+        params_html = '<p style="color:#2a5a8a;font-size:11px;font-style:italic;">Aucune non-conformité détectée</p>'
 
     communes_html = ""
     if df_c is not None and len(df_c) > 0:
@@ -462,7 +462,7 @@ def _dept_panel(dept_row, df_p, df_c):
   <span class="dept-commune-pct">{float(row['taux_conformite']):.1f} %</span>
 </div>"""
     else:
-        communes_html = '<p style="color:#3a7070;font-size:11px;font-style:italic;">Données insuffisantes</p>'
+        communes_html = '<p style="color:#2a5a8a;font-size:11px;font-style:italic;">Données insuffisantes</p>'
 
     return f"""<div class="dept-panel">
   <span class="aq-tag">Département sélectionné</span>
@@ -530,16 +530,16 @@ st.markdown(f"""
 <div style="padding:2rem 0 0.5rem;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
     <span style="font-family:'JetBrains Mono',monospace;font-size:9px;
-                 letter-spacing:0.22em;text-transform:uppercase;color:#4a9990;">
+                 letter-spacing:0.22em;text-transform:uppercase;color:#3a7aaa;">
       AQUASTAT — OBSERVATOIRE DE LA QUALITÉ DE L'EAU EN FRANCE · 2024
     </span>
     {badge}
   </div>
   <h1 style="font-family:'Space Grotesk',sans-serif;font-size:2.8rem;
-             font-weight:700;color:#d4e8e5;margin:0;line-height:1.05;">
-    Chaque goutte <span style="color:#00cfb4;">analysée.</span>
+             font-weight:700;color:#d4e4f0;margin:0;line-height:1.05;">
+    Chaque goutte <span style="color:#38b2f8;">analysée.</span>
   </h1>
-  <p style="color:#4d7a75;font-size:13px;line-height:1.75;max-width:560px;margin:12px 0 0;">
+  <p style="color:#3d6a8a;font-size:13px;line-height:1.75;max-width:560px;margin:12px 0 0;">
     AquaStat agrège les résultats du contrôle sanitaire officiel de l'eau potable distribué
     aux robinets français. Données brutes data.gouv.fr, transformées par le pipeline Databricks.
   </p>
@@ -562,7 +562,7 @@ _kpi(k4, f"{total_nc:,}",                     "Non-conformités", alert=True)
 _kpi(k5, f"{taux:.2f} %",                     "Taux conformité")
 _kpi(k6, top_param,                           f"Paramètre prioritaire · {top_param_nc:,} NC")
 
-st.markdown('<hr style="margin:2rem 0;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
+st.markdown('<hr style="margin:2rem 0;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BLOC 2 — CARTE INTERACTIVE
@@ -597,22 +597,22 @@ with col_leg:
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number",
         value=taux,
-        number={'suffix':' %','font':{'size':24,'color':'#00cfb4','family':'JetBrains Mono'}},
-        title={'text':"Taux national 2024",'font':{'color':'#4a9990','size':10,'family':'JetBrains Mono'}},
+        number={'suffix':' %','font':{'size':24,'color':'#38b2f8','family':'JetBrains Mono'}},
+        title={'text':"Taux national 2024",'font':{'color':'#3a7aaa','size':10,'family':'JetBrains Mono'}},
         gauge={
-            'axis':{'range':[95,100],'tickfont':{'color':'#4a9990','size':9,'family':'JetBrains Mono'}},
-            'bar':{'color':'#00cfb4','thickness':0.22},
+            'axis':{'range':[95,100],'tickfont':{'color':'#3a7aaa','size':9,'family':'JetBrains Mono'}},
+            'bar':{'color':'#38b2f8','thickness':0.22},
             'steps':[
                 {'range':[95.0,97.5],'color':'rgba(200,133,32,0.20)'},
-                {'range':[97.5,99.0],'color':'rgba(0,145,122,0.15)'},
-                {'range':[99.0,100], 'color':'rgba(0,207,180,0.12)'},
+                {'range':[97.5,99.0],'color':'rgba(21,101,192,0.15)'},
+                {'range':[99.0,100], 'color':'rgba(56,178,248,0.12)'},
             ],
             'threshold':{'line':{'color':'#e8b86d','width':2},'thickness':0.8,'value':99},
         }
     ))
     fig_gauge.update_layout(
         paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#4d7a75'), height=200,
+        font=dict(color='#3d6a8a'), height=200,
         margin=dict(t=40, b=10, l=20, r=20)
     )
     st.plotly_chart(fig_gauge, use_container_width=True)
@@ -637,7 +637,7 @@ with col_map_c:
             color='taux_conformite',
             color_continuous_scale=[
                 [0.00,"#c83030"],[0.30,"#c88520"],
-                [0.55,"#1e7ab0"],[1.00,"#00cfb4"],
+                [0.55,"#5b8dd9"],[1.00,"#38b2f8"],
             ],
             range_color=[range_low, 100.0],
             hover_name='nom_departement',
@@ -645,14 +645,14 @@ with col_map_c:
             labels={'taux_conformite':'Conformité %','nb_analyses':'Analyses'},
         )
         fig_map.update_geos(fitbounds="locations", visible=False)
-        fig_map.update_traces(marker_line_color='rgba(5,15,15,0.7)', marker_line_width=0.4)
+        fig_map.update_traces(marker_line_color='rgba(4,12,24,0.7)', marker_line_width=0.4)
         fig_map.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             geo=dict(bgcolor='rgba(0,0,0,0)'),
             coloraxis_colorbar=dict(
                 title=dict(text="Conformité %",
-                           font=dict(color='#4a9990',size=10,family='JetBrains Mono')),
-                tickfont=dict(color='#4a9990',size=9,family='JetBrains Mono'),
+                           font=dict(color='#3a7aaa',size=10,family='JetBrains Mono')),
+                tickfont=dict(color='#3a7aaa',size=9,family='JetBrains Mono'),
                 thickness=10, len=0.55, x=1.01,
             ),
             margin=dict(t=10,b=10,l=0,r=0),
@@ -695,7 +695,7 @@ with col_detail:
 </p>
 </div>""", unsafe_allow_html=True)
 
-st.markdown('<hr style="margin:2rem 0;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
+st.markdown('<hr style="margin:2rem 0;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BLOC 3 — INDICATEURS RÉGLEMENTAIRES
@@ -716,7 +716,7 @@ for row_start in range(0, 9, 3):
                 st.markdown(_indicator_card(INDICATORS[idx]), unsafe_allow_html=True)
     st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
 
-st.markdown('<hr style="margin:2rem 0;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
+st.markdown('<hr style="margin:2rem 0;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BLOC 4 — CLASSEMENT COMMUNES
@@ -733,7 +733,7 @@ col_top, col_bot = st.columns(2, gap="large")
 
 with col_top:
     st.markdown('<span class="rank-head-tag">Taux de conformité · Top 10</span>'
-                '<span class="rank-head-val" style="color:#00cfb4;">En tête du classement</span>',
+                '<span class="rank-head-val" style="color:#38b2f8;">En tête du classement</span>',
                 unsafe_allow_html=True)
     if df_top is not None and len(df_top) > 0:
         st.markdown("".join(
@@ -753,7 +753,7 @@ with col_bot:
             for i, r in df_bottom.reset_index(drop=True).iterrows()
         ), unsafe_allow_html=True)
 
-st.markdown('<hr style="margin:2rem 0;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
+st.markdown('<hr style="margin:2rem 0;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BLOC 5 — ANALYSES DÉTAILLÉES
@@ -770,7 +770,7 @@ with c1:
     fig_t = go.Figure(go.Bar(
         x=df_temp['mois'], y=df_temp['nb_prelevements'],
         marker=dict(color=df_temp['nb_prelevements'].tolist(),
-                    colorscale=[[0,'#1a6b5e'],[1,'#00cfb4']], showscale=False),
+                    colorscale=[[0,'#1a3a7a'],[1,'#38b2f8']], showscale=False),
         hovertemplate='<b>%{x}</b> · %{y:,.0f} prélèvements<extra></extra>',
     ))
     st.plotly_chart(styled(fig_t, 280), use_container_width=True)
@@ -782,7 +782,7 @@ with c2:
     fig_p = go.Figure(go.Bar(
         x=df_p['nb_nc'], y=df_p['nom_parametre'], orientation='h',
         marker=dict(color=df_p['nb_nc'].tolist(),
-                    colorscale=[[0,'#1a6b5e'],[0.5,'#c88520'],[1,'#c83030']], showscale=False),
+                    colorscale=[[0,'#1a3a7a'],[0.5,'#c88520'],[1,'#c83030']], showscale=False),
         hovertemplate='<b>%{y}</b> · %{x:,.0f} NC<extra></extra>',
     ))
     st.plotly_chart(styled(fig_p, 280), use_container_width=True)
@@ -806,20 +806,20 @@ if df_depts is not None:
 # ═══════════════════════════════════════════════════════════════════════════════
 # PIED DE PAGE
 # ═══════════════════════════════════════════════════════════════════════════════
-st.markdown('<hr style="margin:2.5rem 0 1rem;border-color:rgba(0,207,180,0.07);">', unsafe_allow_html=True)
+st.markdown('<hr style="margin:2.5rem 0 1rem;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
 st.markdown(f"""
 <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:2rem;">
   <div>
     <span style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;
-                 font-weight:700;color:#d4e8e5;">AquaStat</span>
+                 font-weight:700;color:#d4e4f0;">AquaStat</span>
     <p style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;
-              text-transform:uppercase;color:#3a7070;margin:6px 0 0;line-height:1.8;">
+              text-transform:uppercase;color:#2a5a8a;margin:6px 0 0;line-height:1.8;">
       Source · data.gouv.fr / ARS — Contrôle sanitaire 2024<br>
       Pipeline · Databricks Unity Catalog · water-quality-pipeline
     </p>
   </div>
   <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;
-              letter-spacing:0.12em;text-transform:uppercase;color:#3a7070;line-height:1.8;">
+              letter-spacing:0.12em;text-transform:uppercase;color:#2a5a8a;line-height:1.8;">
     Mariam Douamba<br>Simplon.co · 2026
   </div>
 </div>
