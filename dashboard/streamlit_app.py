@@ -57,18 +57,21 @@ hr { border-color: rgba(56,178,248,0.07) !important; }
 .kpi-val   { font-family:'JetBrains Mono',monospace; font-size:2.4rem;
              font-weight:600; color:#38b2f8; line-height:1; }
 .kpi-val-alert { color:#e05c5c !important; }
+.kpi-val-sm    { font-size:1.1rem !important; white-space:nowrap; overflow:hidden;
+                 text-overflow:ellipsis; max-width:100%; }
 .kpi-label { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.2em;
              text-transform:uppercase; color:#3a7aaa; margin-top:5px; }
 
-.tier-row { display:flex; align-items:center; gap:10px; padding:7px 0;
+.tier-row { display:flex; align-items:center; gap:8px; padding:7px 0;
             border-bottom:1px solid rgba(56,178,248,0.06); }
-.tier-dot { width:14px; height:14px; border-radius:3px; flex-shrink:0; }
-.tier-lbl { font-size:12px; color:#8ec8e8; flex:1; font-weight:500; }
-.tier-rng { font-family:'JetBrains Mono',monospace; font-size:10px; color:#3a7aaa; }
+.tier-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+.tier-lbl { font-size:11px; color:#8ec8e8; flex:1; font-weight:500; }
+.tier-bar-bg { width:50px; height:3px; background:rgba(56,178,248,0.08);
+               border-radius:2px; flex-shrink:0; }
+.tier-bar    { height:3px; border-radius:2px; }
 .tier-cnt { font-family:'JetBrains Mono',monospace; font-size:10px;
-            color:#38b2f8; width:60px; text-align:right; }
+            color:#38b2f8; width:50px; text-align:right; flex-shrink:0; }
 
-/* Panneau de détail département */
 .dept-panel { background:#0a1420; border:1px solid rgba(56,178,248,0.1);
               border-radius:12px; padding:1.2rem; height:100%; }
 .dept-name  { font-family:'Space Grotesk',sans-serif; font-size:1.5rem; font-weight:700;
@@ -126,6 +129,8 @@ hr { border-color: rgba(56,178,248,0.07) !important; }
 
 .aq-note { font-size:11px; color:#3d6a8a; line-height:1.6; padding:0.8rem 0;
            border-top:1px solid rgba(56,178,248,0.06); }
+.last-update { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.12em;
+               text-transform:uppercase; color:#2a5a8a; margin:0 0 8px; display:block; }
 
 .badge-live { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.15em;
               text-transform:uppercase; background:rgba(79,191,142,0.1);
@@ -226,7 +231,6 @@ def load_france_geojson():
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_dept_detail(dept_code):
-    """Charge les indicateurs détaillés d'un département au clic sur la carte."""
     safe = str(dept_code).replace("'", "")
     df_params, _ = load_db(f"""
         SELECT p.libelle_parametre AS nom_parametre, COUNT(*) AS nb_nc
@@ -253,6 +257,43 @@ def load_dept_detail(dept_code):
         ORDER BY taux_conformite ASC LIMIT 5
     """)
     return df_params, df_communes
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_available_years():
+    df, _ = load_db("""
+        SELECT DISTINCT YEAR(date_prelevement) AS annee
+        FROM gold_dim_prelevement
+        WHERE date_prelevement IS NOT NULL
+        ORDER BY annee DESC
+    """)
+    return df
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_last_update():
+    df, _ = load_db("""
+        SELECT MAX(date_prelevement) AS derniere_maj
+        FROM gold_dim_prelevement
+        WHERE date_prelevement IS NOT NULL
+    """)
+    return df
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_monthly_trend(year=None):
+    yf = f"AND YEAR(date_prelevement) = {int(year)}" if year else ""
+    df, _ = load_db(f"""
+        SELECT MONTH(date_prelevement) AS mois_num,
+               DATE_FORMAT(date_prelevement, 'MMM') AS mois,
+               ROUND(
+                 SUM(CASE WHEN est_conforme = 'Conforme' THEN 1 ELSE 0 END)*100.0 /
+                 NULLIF(SUM(CASE WHEN est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END),0),
+                 2
+               ) AS taux_conformite
+        FROM gold_fact_analyses
+        WHERE date_prelevement IS NOT NULL {yf}
+        GROUP BY 1, 2
+        ORDER BY 1
+    """)
+    return df
 
 # ── Demo data ──────────────────────────────────────────────────────────────────
 def _demo_temporal():
@@ -287,7 +328,7 @@ def _demo_top():
         'code_dept':['69','63','37','74','45','92','06','38','974','78'],
         'nom_departement':['Rhône','Puy-de-Dôme','Indre-et-Loire','Haute-Savoie','Loiret',
                            'Hauts-de-Seine','Alpes-Maritimes','Isère','La Réunion','Yvelines'],
-        'taux_conformite':[100.0]*10,
+        'taux_conformite':[100.0,99.9,99.8,99.8,99.7,99.7,99.6,99.5,99.5,99.4],
     })
 
 def _demo_bottom():
@@ -302,10 +343,10 @@ def _demo_bottom():
 
 # ── Chargement principal ───────────────────────────────────────────────────────
 @st.cache_data(ttl=3600, show_spinner=False)
-def get_all_data():
+def get_all_data(year=None):
     source = "simulation"
+    yf = f"AND YEAR(date_prelevement) = {int(year)}" if year else ""
 
-    # KPIs — taux calculé uniquement sur les analyses évaluées (exclut 'Non évalué')
     df_kpis, _ = load_db("""
         SELECT COUNT(*) AS total_analyses,
                COUNT(DISTINCT commune) AS nb_communes,
@@ -318,12 +359,12 @@ def get_all_data():
         FROM gold_fact_analyses
     """)
 
-    df_temp, _ = load_db("""
+    df_temp, _ = load_db(f"""
         SELECT DATE_FORMAT(date_prelevement,'MMM') AS mois,
                MONTH(date_prelevement) AS mois_num,
                COUNT(*) AS nb_prelevements
         FROM gold_dim_prelevement
-        WHERE date_prelevement IS NOT NULL
+        WHERE date_prelevement IS NOT NULL {yf}
         GROUP BY 1,2 ORDER BY 2
     """)
     if df_temp is None:
@@ -433,7 +474,6 @@ def _ranking_row(rank, nom, code, dept, pct, good):
 </div>"""
 
 def _dept_panel(dept_row, df_p, df_c):
-    """Génère le HTML du panneau de détail département."""
     nom  = dept_row['nom_departement']
     tc   = float(dept_row['taux_conformite'])
     nb   = int(dept_row['nb_analyses'])
@@ -489,20 +529,49 @@ def _dept_panel(dept_row, df_p, df_c):
   </div>
 </div>"""
 
+# ── PRÉ-SIDEBAR : années & dernière mise à jour ────────────────────────────────
+_df_years_avail = load_available_years()
+_years_list = []
+if _df_years_avail is not None and len(_df_years_avail) > 0:
+    _years_list = sorted(_df_years_avail['annee'].dropna().astype(int).tolist(), reverse=True)
+
+_df_last_upd = load_last_update()
+_last_update_str = ""
+if _df_last_upd is not None and len(_df_last_upd) > 0:
+    _lu = _df_last_upd.iloc[0].get('derniere_maj')
+    if _lu is not None:
+        _last_update_str = str(_lu)[:10]
+
 # ── SIDEBAR ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 💧 AquaStat")
     st.divider()
-    st.caption("Contrôle sanitaire 2024 · data.gouv.fr")
-    top_n   = st.slider("Indicateurs à afficher", 5, 20, 12)
-    nc_only = st.checkbox("Départements avec NC uniquement", value=False)
+
+    selected_year = None
+    if len(_years_list) > 1:
+        _year_opts = ["Toutes les années"] + [str(y) for y in _years_list]
+        _year_sel  = st.selectbox("Année", _year_opts)
+        selected_year = None if _year_sel == "Toutes les années" else int(_year_sel)
+    elif len(_years_list) == 1:
+        st.caption(f"Données {_years_list[0]}")
+
+    top_n   = st.slider("Indicateurs NC à afficher", 5, 20, 12)
+    nc_only = st.checkbox(
+        "Carte : dép. avec NC uniquement", value=False,
+        help="Masque les départements sans non-conformité sur la carte et dans le tableau",
+    )
     st.divider()
+
+    if _last_update_str:
+        st.markdown(f'<span class="last-update">Données au {_last_update_str}</span>',
+                    unsafe_allow_html=True)
     st.markdown(f"[API REST]({_api_url()}/docs) · [GitHub](https://github.com/MariamDouamba/water-quality-pipeline)")
 
 # ── CHARGEMENT ─────────────────────────────────────────────────────────────────
 with st.spinner("Chargement…"):
-    df_kpis, df_temp, df_params, df_depts, df_top, df_bottom, source = get_all_data()
-    geojson = load_france_geojson()
+    df_kpis, df_temp, df_params, df_depts, df_top, df_bottom, source = get_all_data(year=selected_year)
+    geojson  = load_france_geojson()
+    df_trend = load_monthly_trend(year=selected_year)
 
 is_live = source == "databricks"
 
@@ -516,9 +585,10 @@ if df_kpis is not None and len(df_kpis) > 0:
 else:
     total, total_nc, taux, nb_communes = 12_645_691, 28_140, 99.78, 34_811
 
-nb_prelevements = int(df_temp['nb_prelevements'].sum()) if is_live else 291_604
-top_param = df_params.iloc[0]['nom_parametre'] if df_params is not None and len(df_params) > 0 else "Turbidité"
-top_param_nc = int(df_params.iloc[0]['nb_nc']) if df_params is not None and len(df_params) > 0 else 4820
+nb_prelevements   = int(df_temp['nb_prelevements'].sum()) if is_live else 291_604
+top_param         = df_params.iloc[0]['nom_parametre'] if df_params is not None and len(df_params) > 0 else "Turbidité"
+top_param_nc      = int(df_params.iloc[0]['nb_nc'])    if df_params is not None and len(df_params) > 0 else 4820
+top_param_display = (top_param[:16] + "…") if len(top_param) > 18 else top_param
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BLOC 1 — EN-TÊTE
@@ -526,12 +596,14 @@ top_param_nc = int(df_params.iloc[0]['nb_nc']) if df_params is not None and len(
 badge = ('<span class="badge-live">LIVE · Databricks</span>'
          if is_live else '<span class="badge-demo">DÉMO · Données simulées</span>')
 
+_year_label = f" · {selected_year}" if selected_year else " · 2024"
+
 st.markdown(f"""
 <div style="padding:2rem 0 0.5rem;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
     <span style="font-family:'JetBrains Mono',monospace;font-size:9px;
                  letter-spacing:0.22em;text-transform:uppercase;color:#3a7aaa;">
-      AQUASTAT — OBSERVATOIRE DE LA QUALITÉ DE L'EAU EN FRANCE · 2024
+      AQUASTAT — OBSERVATOIRE DE LA QUALITÉ DE L'EAU EN FRANCE{_year_label}
     </span>
     {badge}
   </div>
@@ -547,20 +619,22 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── 6 KPIs live ────────────────────────────────────────────────────────────────
-def _kpi(col, val, lbl, alert=False):
-    cls = "kpi-val kpi-val-alert" if alert else "kpi-val"
+def _kpi(col, val, lbl, alert=False, small=False):
+    cls = "kpi-val"
+    if alert: cls += " kpi-val-alert"
+    if small: cls += " kpi-val-sm"
     col.markdown(f"""<div class="kpi-block">
   <div class="{cls}">{val}</div>
   <div class="kpi-label">{lbl}</div>
 </div>""", unsafe_allow_html=True)
 
 k1,k2,k3,k4,k5,k6 = st.columns(6)
-_kpi(k1, f"{total/1_000_000:.1f}M",          "Analyses totales")
-_kpi(k2, f"{nb_prelevements:,}",              "Prélèvements")
-_kpi(k3, f"{nb_communes:,}",                  "Communes")
-_kpi(k4, f"{total_nc:,}",                     "Non-conformités", alert=True)
-_kpi(k5, f"{taux:.2f} %",                     "Taux conformité")
-_kpi(k6, top_param,                           f"Paramètre prioritaire · {top_param_nc:,} NC")
+_kpi(k1, f"{total/1_000_000:.1f}M", "Analyses totales")
+_kpi(k2, f"{nb_prelevements:,}",    "Prélèvements")
+_kpi(k3, f"{nb_communes:,}",        "Communes")
+_kpi(k4, f"{total_nc:,}",           "Non-conformités", alert=True)
+_kpi(k5, f"{taux:.2f} %",           "Taux conformité")
+_kpi(k6, top_param_display,         f"Param. prioritaire · {top_param_nc:,} NC", small=True)
 
 st.markdown('<hr style="margin:2rem 0;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
 
@@ -577,37 +651,40 @@ with col_leg:
 """, unsafe_allow_html=True)
 
     if df_depts is not None and 'taux_conformite' in df_depts.columns:
-        df_t  = df_depts.copy()
+        df_t       = df_depts.copy()
         df_t['tier'] = df_t['taux_conformite'].apply(conformite_tier)
-        cnt   = df_t['tier'].value_counts()
-        ranges = ["≥ 95 %","88–95 %","80–88 %","< 80 %"]
+        cnt          = df_t['tier'].value_counts()
+        total_depts  = max(len(df_t), 1)
+
         st.markdown('<div style="margin-top:1rem;">', unsafe_allow_html=True)
-        for tier, color, border, rng in zip(TIER_ORDER, TIER_HEX, TIER_BORDER, ranges):
-            lbl = tier.split(" (")[0]
-            n   = cnt.get(tier, 0)
+        for tier, color, border in zip(TIER_ORDER, TIER_HEX, TIER_BORDER):
+            lbl   = tier.split(" (")[0]
+            n     = cnt.get(tier, 0)
+            pct_w = round(n / total_depts * 100)
             st.markdown(f"""<div class="tier-row">
   <div class="tier-dot" style="background:{color};box-shadow:0 0 0 1px {border}33;"></div>
   <span class="tier-lbl">{lbl}</span>
-  <span class="tier-rng">{rng}</span>
+  <div class="tier-bar-bg"><div class="tier-bar" style="width:{pct_w}%;background:{color};"></div></div>
   <span class="tier-cnt">{n} dép.</span>
 </div>""", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Jauge
+    # Jauge [80–100] avec zones par tier
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number",
         value=taux,
         number={'suffix':' %','font':{'size':24,'color':'#38b2f8','family':'JetBrains Mono'}},
-        title={'text':"Taux national 2024",'font':{'color':'#3a7aaa','size':10,'family':'JetBrains Mono'}},
+        title={'text':"Taux national",'font':{'color':'#3a7aaa','size':10,'family':'JetBrains Mono'}},
         gauge={
-            'axis':{'range':[95,100],'tickfont':{'color':'#3a7aaa','size':9,'family':'JetBrains Mono'}},
+            'axis':{'range':[80,100],'tickvals':[80,88,95,100],
+                    'tickfont':{'color':'#3a7aaa','size':9,'family':'JetBrains Mono'}},
             'bar':{'color':'#38b2f8','thickness':0.22},
             'steps':[
-                {'range':[95.0,97.5],'color':'rgba(200,133,32,0.20)'},
-                {'range':[97.5,99.0],'color':'rgba(21,101,192,0.15)'},
-                {'range':[99.0,100], 'color':'rgba(56,178,248,0.12)'},
+                {'range':[80.0,88.0],'color':'rgba(200,133,32,0.20)'},
+                {'range':[88.0,95.0],'color':'rgba(91,141,217,0.20)'},
+                {'range':[95.0,100], 'color':'rgba(56,178,248,0.12)'},
             ],
-            'threshold':{'line':{'color':'#e8b86d','width':2},'thickness':0.8,'value':99},
+            'threshold':{'line':{'color':'#e8b86d','width':2},'thickness':0.8,'value':95},
         }
     ))
     fig_gauge.update_layout(
@@ -619,15 +696,17 @@ with col_leg:
 
 # ── Carte cliquable ─────────────────────────────────────────────────────────────
 with col_map_c:
-    selected_code = None  # code_geo du département cliqué
+    selected_code = None
 
     if geojson and df_depts is not None and 'taux_conformite' in df_depts.columns:
         df_map = df_depts.copy()
+        if nc_only and 'nb_nc' in df_map.columns:
+            df_map = df_map[df_map['nb_nc'] > 0]
         df_map['code_geo']        = df_map['code_dept'].apply(normalize_dept_code)
         df_map['taux_conformite'] = pd.to_numeric(df_map['taux_conformite'], errors='coerce')
 
-        tc_vals  = df_map['taux_conformite'].dropna()
-        range_low = min(float(tc_vals.min()) - 3.0, 90.0)
+        tc_vals   = df_map['taux_conformite'].dropna()
+        range_low = min(float(tc_vals.min()) - 3.0, 90.0) if len(tc_vals) > 0 else 90.0
 
         fig_map = px.choropleth(
             df_map,
@@ -659,14 +738,12 @@ with col_map_c:
             height=430,
         )
 
-        # ← Clic sur la carte
         event = st.plotly_chart(
             fig_map, use_container_width=True,
             on_select="rerun", key="aquastat_map",
         )
         if event and event.selection and event.selection.points:
             selected_code = event.selection.points[0].get('location')
-
     else:
         st.info("Carte non disponible.")
 
@@ -681,7 +758,6 @@ with col_detail:
         dept_rows = df_depts[df_depts['code_dept'].apply(normalize_dept_code) == selected_code]
         if len(dept_rows) > 0:
             dept_row = dept_rows.iloc[0]
-            # Utilise le code_dept original (non normalisé) pour la requête SQL
             raw_code = dept_row['code_dept']
             with st.spinner("Chargement…"):
                 df_p, df_c = load_dept_detail(raw_code)
@@ -722,7 +798,7 @@ st.markdown('<hr style="margin:2rem 0;border-color:rgba(56,178,248,0.07);">', un
 # BLOC 4 — CLASSEMENT COMMUNES
 # ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<span class="aq-tag">Classement 2024 — Communes (min. 200 analyses évaluées)</span>
+<span class="aq-tag">Classement — Communes (min. 200 analyses évaluées)</span>
 <h2 class="aq-title">Meilleures et <span class="aq-title-amber">moins bonnes</span> performances.</h2>
 <p class="aq-body">Seules les communes disposant d'au moins 200 analyses évaluées sont incluses
 pour garantir la représentativité statistique du classement.</p>
@@ -766,13 +842,40 @@ st.markdown("""
 c1, c2 = st.columns(2, gap="large")
 
 with c1:
-    st.markdown('<span class="aq-tag">Prélèvements par mois</span>', unsafe_allow_html=True)
-    fig_t = go.Figure(go.Bar(
+    _tag_yr = f" · {selected_year}" if selected_year else ""
+    st.markdown(f'<span class="aq-tag">Prélèvements par mois{_tag_yr}</span>', unsafe_allow_html=True)
+
+    fig_t = go.Figure()
+    fig_t.add_trace(go.Bar(
         x=df_temp['mois'], y=df_temp['nb_prelevements'],
         marker=dict(color=df_temp['nb_prelevements'].tolist(),
                     colorscale=[[0,'#1a3a7a'],[1,'#38b2f8']], showscale=False),
         hovertemplate='<b>%{x}</b> · %{y:,.0f} prélèvements<extra></extra>',
+        name='Prélèvements',
     ))
+
+    _has_trend = (df_trend is not None and len(df_trend) > 0
+                  and 'taux_conformite' in df_trend.columns
+                  and 'mois' in df_trend.columns)
+    if _has_trend:
+        fig_t.add_trace(go.Scatter(
+            x=df_trend['mois'], y=df_trend['taux_conformite'],
+            mode='lines+markers',
+            line=dict(color='#e8b86d', width=2),
+            marker=dict(color='#e8b86d', size=5, symbol='circle'),
+            hovertemplate='<b>%{x}</b> · %{y:.2f} % conformité<extra></extra>',
+            name='Conformité %',
+            yaxis='y2',
+        ))
+        fig_t.update_layout(
+            yaxis2=dict(
+                overlaying='y', side='right',
+                range=[97, 100.5], showgrid=False,
+                tickfont=dict(color='#e8b86d', size=9, family='JetBrains Mono'),
+                ticksuffix=' %',
+            )
+        )
+
     st.plotly_chart(styled(fig_t, 280), use_container_width=True)
 
 with c2:
@@ -787,26 +890,60 @@ with c2:
     ))
     st.plotly_chart(styled(fig_p, 280), use_container_width=True)
 
+# ── Tableau + export CSV ────────────────────────────────────────────────────────
 if df_depts is not None:
-    st.markdown('<span class="aq-tag" style="display:block;margin-bottom:8px;">Données par département</span>',
-                unsafe_allow_html=True)
     df_d = df_depts.copy()
     if nc_only and 'nb_nc' in df_d.columns:
         df_d = df_d[df_d['nb_nc'] > 0]
     cols_show = [c for c in ['nom_departement','code_dept','nb_analyses','nb_nc','taux_conformite']
                  if c in df_d.columns]
-    st.dataframe(
-        df_d[cols_show].rename(columns={
-            'nom_departement':'Département','code_dept':'Code',
-            'nb_analyses':'Analyses','nb_nc':'Non-conformes','taux_conformite':'Conformité %',
-        }),
-        use_container_width=True, hide_index=True, height=320,
-    )
+    export_df = df_d[cols_show].rename(columns={
+        'nom_departement':'Département','code_dept':'Code',
+        'nb_analyses':'Analyses','nb_nc':'Non-conformes','taux_conformite':'Conformité %',
+    })
+
+    col_tbl_title, col_tbl_dl = st.columns([5, 1])
+    with col_tbl_title:
+        st.markdown('<span class="aq-tag" style="display:block;margin-bottom:8px;">Données par département</span>',
+                    unsafe_allow_html=True)
+    with col_tbl_dl:
+        st.download_button(
+            "⬇ CSV",
+            data=export_df.to_csv(index=False).encode('utf-8'),
+            file_name="aquastat_departements.csv",
+            mime="text/csv",
+        )
+
+    st.dataframe(export_df, use_container_width=True, hide_index=True, height=320)
+
+# ── Méthodologie ────────────────────────────────────────────────────────────────
+with st.expander("Méthodologie & sources de données"):
+    st.markdown("""
+**Calcul du taux de conformité**
+
+Le taux est calculé uniquement sur les analyses dont le résultat est évalué (Conforme ou Non conforme).
+Les analyses catégorisées *Non évalué* (environ 18 % du total) sont exclues du dénominateur.
+
+**Formule :**
+```
+Taux = Σ(Conforme) / Σ(Conforme + Non conforme) × 100
+```
+
+**Sources :**
+- Données brutes : data.gouv.fr — Résultats du contrôle sanitaire de l'eau potable en France
+- Pipeline ETL : Databricks Unity Catalog (tables bronze → silver → gold)
+- Géofrontières : gregoiredavid/france-geojson (INSEE 2024)
+
+**Interprétation :**
+Un taux de 99,72 % signifie que sur 100 analyses évaluées, 99,72 sont conformes aux seuils réglementaires.
+Un résultat *Non conforme* ne signifie pas que l'eau est dangereuse — les seuils européens sont volontairement prudents.
+""")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PIED DE PAGE
 # ═══════════════════════════════════════════════════════════════════════════════
 st.markdown('<hr style="margin:2.5rem 0 1rem;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
+_footer_update = f" · Données au {_last_update_str}" if _last_update_str else ""
 st.markdown(f"""
 <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:2rem;">
   <div>
@@ -814,7 +951,7 @@ st.markdown(f"""
                  font-weight:700;color:#d4e4f0;">AquaStat</span>
     <p style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;
               text-transform:uppercase;color:#2a5a8a;margin:6px 0 0;line-height:1.8;">
-      Source · data.gouv.fr / ARS — Contrôle sanitaire 2024<br>
+      Source · data.gouv.fr / ARS — Contrôle sanitaire{_footer_update}<br>
       Pipeline · Databricks Unity Catalog · water-quality-pipeline
     </p>
   </div>
