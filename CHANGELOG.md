@@ -1,3 +1,9 @@
+## [1.8.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.7.0...v1.8.0) (2026-05-14)
+
+### Features
+
+* **dashboard:** palette eau profonde — azur/amber remplace teal/vert ([57b2789](https://github.com/MariamDouamba/water-quality-pipeline/commit/57b27893074fef077f1f093cc078de735fb7c445)), closes [#040c18](https://github.com/MariamDouamba/water-quality-pipeline/issues/040c18) [#38b2f8](https://github.com/MariamDouamba/water-quality-pipeline/issues/38b2f8) [1565c0/#5b8dd9](https://github.com/1565c0/water-quality-pipeline/issues/5b8dd9) [#e8b86d](https://github.com/MariamDouamba/water-quality-pipeline/issues/e8b86d)
+
 ## [1.7.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.6.3...v1.7.0) (2026-05-14)
 
 ### Features
