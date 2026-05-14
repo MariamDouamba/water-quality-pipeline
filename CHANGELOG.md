@@ -1,3 +1,9 @@
+## [1.10.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.9.0...v1.10.0) (2026-05-14)
+
+### Features
+
+* **dashboard:** remplace 9 indicateurs statiques par analyse communes ([7894cc2](https://github.com/MariamDouamba/water-quality-pipeline/commit/7894cc21981e4dc4e07d680de709cbd132e67b1e))
+
 ## [1.9.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.8.0...v1.9.0) (2026-05-14)
 
 ### Features
