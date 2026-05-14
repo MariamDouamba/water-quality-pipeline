@@ -278,6 +278,28 @@ def load_last_update():
     return df
 
 @st.cache_data(ttl=3600, show_spinner=False)
+def load_communes_all():
+    df, _ = load_db("""
+        SELECT f.commune AS nom_commune,
+               f.departement_code AS code_dept,
+               d.nom_departement,
+               SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END) AS nb_analyses,
+               ROUND(
+                 SUM(CASE WHEN f.est_conforme='Conforme' THEN 1 ELSE 0 END)*100.0/
+                 NULLIF(SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END),0),
+                 1
+               ) AS taux_conformite
+        FROM gold_fact_analyses f
+        LEFT JOIN gold_dim_departement d ON f.departement_code = d.code_departement
+        WHERE f.commune IS NOT NULL
+          AND f.est_conforme IN ('Conforme','Non conforme')
+        GROUP BY f.commune, f.departement_code, d.nom_departement
+        HAVING SUM(CASE WHEN f.est_conforme IN ('Conforme','Non conforme') THEN 1 ELSE 0 END) >= 30
+        ORDER BY taux_conformite ASC
+    """)
+    return df
+
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_monthly_trend(year=None):
     yf = f"AND YEAR(date_prelevement) = {int(year)}" if year else ""
     df, _ = load_db(f"""
@@ -339,6 +361,30 @@ def _demo_bottom():
         'nom_departement':['Saône-et-Loire','Saône-et-Loire','Calvados','Guyane','Corrèze',
                            'Corrèze','Aube','Alpes-Maritimes','Tarn','Tarn'],
         'taux_conformite':[6.3,10.7,16.4,25.5,30.8,30.9,44.9,47.1,47.8,48.2],
+    })
+
+def _demo_communes_all():
+    rng = np.random.default_rng(42)
+    n   = 700
+    taux = np.concatenate([
+        rng.uniform(99.0, 100.0, int(n*0.52)),
+        rng.uniform(95.0,  99.0, int(n*0.30)),
+        rng.uniform(88.0,  95.0, int(n*0.09)),
+        rng.uniform(80.0,  88.0, int(n*0.05)),
+        rng.uniform( 0.0,  80.0, int(n*0.04)),
+    ])
+    nb = np.exp(rng.uniform(np.log(30), np.log(60000), len(taux))).astype(int)
+    depts = ['13','69','33','59','31','44','67','06','34','35','38','83','51','42','76','21','30','29','87','75']
+    dnames= ['Bouches-du-Rhône','Rhône','Gironde','Nord','Haute-Garonne','Loire-Atlantique',
+             'Bas-Rhin','Alpes-Maritimes','Hérault','Ille-et-Vilaine','Isère','Var','Marne',
+             'Loire','Seine-Maritime',"Côte-d'Or",'Gard','Finistère','Haute-Vienne','Paris']
+    idx   = rng.integers(0, len(depts), len(taux))
+    return pd.DataFrame({
+        'nom_commune'   : [f"Commune_{i:04d}" for i in range(len(taux))],
+        'code_dept'     : [depts[i]  for i in idx],
+        'nom_departement': [dnames[i] for i in idx],
+        'nb_analyses'   : nb,
+        'taux_conformite': np.round(taux, 1),
     })
 
 # ── Chargement principal ───────────────────────────────────────────────────────
@@ -428,36 +474,7 @@ def get_all_data(year=None):
 
     return df_kpis, df_temp, df_params, df_depts, df_top, df_bottom, source
 
-# ── Répertoire des indicateurs ─────────────────────────────────────────────────
-INDICATORS = [
-    {"code":"pH",   "name":"Potentiel hydrogène",
-     "desc":"Acidité de l'eau. Hors de la plage 6,5–9, le réseau se corrode et des irritations apparaissent."},
-    {"code":"NTU",  "name":"Turbidité",
-     "desc":"Matières en suspension. Une eau trouble peut masquer des micro-organismes et réduire l'efficacité de la désinfection."},
-    {"code":"µS/cm","name":"Conductivité",
-     "desc":"Concentration en sels minéraux dissous. Toute variation soudaine signale un changement de source ou une intrusion."},
-    {"code":"UFC",  "name":"E. coli",
-     "desc":"Indicateur de contamination fécale récente. Sa détection déclenche une alerte sanitaire immédiate."},
-    {"code":"UFC",  "name":"Entérocoques",
-     "desc":"Indicateur fécal plus résistant que E. coli. Utile pour détecter les contaminations anciennes dans le réseau."},
-    {"code":"UFC",  "name":"Bactéries coliformes",
-     "desc":"Famille bactérienne large. Un excès révèle un défaut de désinfection ou une intrusion d'eau extérieure."},
-    {"code":"mg/L", "name":"Ammonium (NH₄⁺)",
-     "desc":"Traceur de pollution azotée agricole ou industrielle, précurseur de la formation de nitrites en réseau."},
-    {"code":"UFC",  "name":"Bactéries aérobies",
-     "desc":"Flore bactérienne globale à 22 °C. Un pic trahit une stagnation prolongée ou un biofilm dans la canalisation."},
-    {"code":"seuil","name":"Odeur et saveur",
-     "desc":"Tests organoleptiques réglementés. Une anomalie persistante indique un sous-dosage ou une contamination chimique."},
-]
-
 # ── Constructeurs HTML ──────────────────────────────────────────────────────────
-def _indicator_card(info):
-    return f"""<div class="pcard">
-  <div class="pcard-code">{info['code']}</div>
-  <div class="pcard-name">{info['name']}</div>
-  <div class="pcard-desc">{info['desc']}</div>
-</div>"""
-
 def _ranking_row(rank, nom, code, dept, pct, good):
     bar_color = "#38b2f8" if good else "#e05c5c"
     pct_color = "#38b2f8" if good else "#e05c5c"
@@ -570,8 +587,11 @@ with st.sidebar:
 # ── CHARGEMENT ─────────────────────────────────────────────────────────────────
 with st.spinner("Chargement…"):
     df_kpis, df_temp, df_params, df_depts, df_top, df_bottom, source = get_all_data(year=selected_year)
-    geojson  = load_france_geojson()
-    df_trend = load_monthly_trend(year=selected_year)
+    geojson        = load_france_geojson()
+    df_trend       = load_monthly_trend(year=selected_year)
+    df_communes_all = load_communes_all()
+    if df_communes_all is None:
+        df_communes_all = _demo_communes_all()
 
 is_live = source == "databricks"
 
@@ -774,23 +794,112 @@ with col_detail:
 st.markdown('<hr style="margin:2rem 0;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# BLOC 3 — INDICATEURS RÉGLEMENTAIRES
+# BLOC 3 — ANALYSE APPROFONDIE DES COMMUNES
 # ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<span class="aq-tag">Référentiel technique</span>
-<h2 class="aq-title">9 indicateurs <span class="aq-title-amber">réglementaires.</span></h2>
-<p class="aq-body">Le contrôle sanitaire de l'eau repose sur neuf mesures obligatoires,
-chacune ciblant un risque sanitaire précis défini par la directive européenne sur l'eau potable.</p>
+<span class="aq-tag">Analyse approfondie</span>
+<h2 class="aq-title">Communes <span class="aq-title-accent">sous la loupe.</span></h2>
+<p class="aq-body">Distribution des taux de conformité, relation taille/qualité et recherche par commune
+sur l'ensemble des points de distribution avec au moins 30 analyses évaluées.</p>
 """, unsafe_allow_html=True)
 
-for row_start in range(0, 9, 3):
-    cols = st.columns(3, gap="small")
-    for j, col in enumerate(cols):
-        idx = row_start + j
-        if idx < len(INDICATORS):
-            with col:
-                st.markdown(_indicator_card(INDICATORS[idx]), unsafe_allow_html=True)
-    st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
+_ca = df_communes_all.copy()
+_ca['tier'] = _ca['taux_conformite'].apply(conformite_tier)
+
+ca1, ca2 = st.columns(2, gap="large")
+
+with ca1:
+    st.markdown('<span class="aq-tag">Distribution des taux de conformité</span>', unsafe_allow_html=True)
+    _bins   = [0, 50, 80, 88, 95, 99, 100.01]
+    _labels = ['< 50 %', '50–80 %', '80–88 %', '88–95 %', '95–99 %', '≥ 99 %']
+    _colors = ['#c83030', '#c83030', '#c88520', '#5b8dd9', '#1565c0', '#38b2f8']
+    _counts, _ = np.histogram(_ca['taux_conformite'].dropna(), bins=_bins)
+    _total_c   = int(_counts.sum()) or 1
+    fig_hist = go.Figure(go.Bar(
+        x=_labels, y=_counts,
+        marker_color=_colors,
+        text=[f"{v:,}" for v in _counts],
+        textposition='outside',
+        textfont=dict(color='#8ec8e8', size=10, family='JetBrains Mono'),
+        hovertemplate='<b>%{x}</b><br>%{y:,} communes · %{customdata:.1f} %<extra></extra>',
+        customdata=_counts / _total_c * 100,
+    ))
+    fig_hist.update_layout(
+        **_LAYOUT, height=300,
+        yaxis_title="Communes",
+        bargap=0.15,
+    )
+    fig_hist.update_xaxes(**_AXIS)
+    fig_hist.update_yaxes(**_AXIS)
+    st.plotly_chart(fig_hist, use_container_width=True)
+    st.markdown(
+        f'<p style="font-size:11px;color:#2a5a8a;margin-top:-12px;">'
+        f'{len(_ca):,} communes analysées · seuil min. 30 analyses évaluées</p>',
+        unsafe_allow_html=True,
+    )
+
+with ca2:
+    st.markdown('<span class="aq-tag">Taille vs conformité — chaque point est une commune</span>',
+                unsafe_allow_html=True)
+    fig_sc = px.scatter(
+        _ca,
+        x='nb_analyses', y='taux_conformite',
+        color='tier',
+        color_discrete_map=TIER_COLORS,
+        log_x=True,
+        opacity=0.55,
+        hover_name='nom_commune',
+        hover_data={
+            'nom_departement': True,
+            'nb_analyses': ':,',
+            'taux_conformite': ':.1f',
+            'tier': False,
+            'code_dept': False,
+        },
+        labels={'nb_analyses': 'Analyses évaluées (échelle log)', 'taux_conformite': 'Conformité %'},
+    )
+    fig_sc.update_traces(marker=dict(size=5))
+    fig_sc.update_layout(
+        **_LAYOUT, height=300,
+        legend=dict(
+            title=None, orientation='h', y=-0.28,
+            font=dict(color='#8ec8e8', size=10, family='JetBrains Mono'),
+            bgcolor='rgba(0,0,0,0)',
+        ),
+    )
+    fig_sc.update_xaxes(**_AXIS)
+    fig_sc.update_yaxes(**_AXIS)
+    st.plotly_chart(fig_sc, use_container_width=True)
+
+# ── Recherche de commune ────────────────────────────────────────────────────────
+st.markdown('<span class="aq-tag" style="margin-top:0.5rem;display:block;">Rechercher une commune</span>',
+            unsafe_allow_html=True)
+_search_col, _ = st.columns([2, 3])
+with _search_col:
+    _search_q = st.text_input("", placeholder="Ex : Lyon, Montpellier, Brest…",
+                               label_visibility="collapsed")
+
+if _search_q and len(_search_q.strip()) >= 2:
+    _mask = _ca['nom_commune'].str.contains(_search_q.strip(), case=False, na=False)
+    _found = _ca[_mask][['nom_commune','nom_departement','code_dept','nb_analyses','taux_conformite','tier']]\
+               .sort_values('taux_conformite').head(25)
+    if len(_found) > 0:
+        st.dataframe(
+            _found.rename(columns={
+                'nom_commune':'Commune','nom_departement':'Département','code_dept':'Code',
+                'nb_analyses':'Analyses','taux_conformite':'Conformité %','tier':'Niveau',
+            }),
+            use_container_width=True, hide_index=True,
+            height=min(42*len(_found)+40, 340),
+        )
+    else:
+        st.markdown('<p style="color:#2a5a8a;font-size:12px;font-style:italic;">Aucune commune trouvée.</p>',
+                    unsafe_allow_html=True)
+else:
+    st.markdown(
+        '<p style="color:#2a5a8a;font-size:11px;">Tapez au moins 2 caractères pour lancer la recherche.</p>',
+        unsafe_allow_html=True,
+    )
 
 st.markdown('<hr style="margin:2rem 0;border-color:rgba(56,178,248,0.07);">', unsafe_allow_html=True)
 
