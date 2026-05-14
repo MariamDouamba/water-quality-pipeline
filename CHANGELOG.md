@@ -1,3 +1,9 @@
+## [1.7.0](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.6.3...v1.7.0) (2026-05-14)
+
+### Features
+
+* **dashboard:** interactive dept click + 6 live KPIs ([58b1517](https://github.com/MariamDouamba/water-quality-pipeline/commit/58b1517e8012cc0b7c09d56bf3e997e9b7aa1feb))
+
 ## [1.6.3](https://github.com/MariamDouamba/water-quality-pipeline/compare/v1.6.2...v1.6.3) (2026-05-13)
 
 ### Bug Fixes
